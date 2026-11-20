@@ -226,37 +226,179 @@ $('togglePass').onclick=()=>{ const pw=$('password'); const show=pw.type==='pass
   }
  });
 function setAvatar(el,url,fallback){if(!el)return; if(url){el.innerHTML=`<img src="${escapeHtml(url)}" alt="">`} else el.textContent=(fallback||"V").slice(0,1).toUpperCase()}
-async function loadMyProfile(){
+async function loadContacts(){
 
-  const {data, error} = await client
-    .from('profiles')
-    .select('id,display_name,username,avatar_url')
-    .eq('id', user.id)
-    .maybeSingle();
+ const mine = await client
+  .from('conversation_members')
+  .select('conversation_id')
+  .eq('user_id', user.id);
 
-  if(error){
-    console.warn(error.message);
-    return;
+ if(mine.error){
+  $('contacts').innerHTML='<p class="muted" style="padding:0 20px;font-size:13px">Could not load chats.</p>';
+  return;
+ }
+
+ let ids=[...new Set((mine.data||[]).map(x=>x.conversation_id).filter(Boolean))];
+
+ if(!ids.length){
+  contacts=[];
+  renderContacts();
+  return;
+ }
+
+ // Check deleted chats
+ const deletedResult=await client
+  .from('deleted_chats')
+  .select('conversation_id,deleted_at')
+  .eq('user_id',user.id);
+
+ const deletedList=deletedResult.error?[]:(deletedResult.data||[]);
+ const hidden=new Set();
+
+ for(const item of deletedList){
+
+  const newer=await client
+   .from('messages')
+   .select('id')
+   .eq('conversation_id',item.conversation_id)
+   .neq('sender_id',user.id)
+   .gt('created_at',item.deleted_at)
+   .limit(1);
+
+  if(newer.error){
+   hidden.add(item.conversation_id);
+   continue;
   }
 
-  if(!data){
+  if(newer.data&&newer.data.length){
+   await client.from('deleted_chats')
+    .delete()
+    .eq('user_id',user.id)
+    .eq('conversation_id',item.conversation_id);
+  }else{
+   hidden.add(item.conversation_id);
+  }
+ }
 
-    const display_name =
-      user.user_metadata?.display_name ||
-      user.email.split('@')[0];
+ ids=ids.filter(id=>!hidden.has(id));
 
-    const {data:created, error:createError} =
-      await client.from('profiles').upsert({
-        id:user.id,
-        display_name,
-        username:null
-      }).select().single();
+ if(!ids.length){
+  contacts=[];
+  renderContacts();
+  return;
+ }
 
-    if(createError){
-      console.warn(createError.message);
-      return;
+ // Load conversation members
+ const members=await client
+  .from('conversation_members')
+  .select('conversation_id,user_id')
+  .in('conversation_id',ids);
+
+ if(members.error)return;
+
+ // Load conversation information
+ const conversationsResult=await client
+  .from('conversations')
+  .select('id,is_group,title')
+  .in('id',ids);
+
+ if(conversationsResult.error){
+  console.error('Could not load conversations:',conversationsResult.error);
+  return;
+ }
+
+ const conversationsMap={};
+
+ (conversationsResult.data||[]).forEach(c=>{
+  conversationsMap[c.id]=c;
+ });
+
+ // Load other users' profiles
+ const otherIds=[
+  ...new Set(
+   (members.data||[])
+    .filter(m=>m.user_id!==user.id)
+    .map(m=>m.user_id)
+  )
+ ];
+
+ let profilesMap={};
+
+ if(otherIds.length){
+
+  const profs=await client
+   .from('profiles')
+   .select('id,display_name,username,avatar_url')
+   .in('id',otherIds);
+
+  (profs.data||[]).forEach(p=>{
+   profilesMap[p.id]=p;
+   profilesCache[p.id]=p;
+  });
+ }
+
+ // Load latest messages
+ const lastMsgs=await client
+  .from('messages')
+  .select('conversation_id,body,created_at')
+  .in('conversation_id',ids)
+  .order('created_at',{ascending:false});
+
+ const lastByConvo={};
+
+ (lastMsgs.data||[]).forEach(m=>{
+  if(!lastByConvo[m.conversation_id]){
+   lastByConvo[m.conversation_id]=m;
+  }
+ });
+
+ // Build contacts list
+ contacts=ids.map(convoId=>{
+
+  const allMembers=(members.data||[])
+   .filter(m=>m.conversation_id===convoId);
+
+  const conversation=conversationsMap[convoId];
+
+  const isGroup=conversation?.is_group===true;
+
+  if(isGroup){
+
+   return {
+    conversation:convoId,
+    id:convoId,
+    display_name:conversation?.title||'Group Chat',
+    username:'',
+    avatar_url:'',
+    last:lastByConvo[convoId]?.body||'',
+    last_at:lastByConvo[convoId]?.created_at||'',
+    isGroup:true,
+    memberCount:allMembers.length,
+    memberIds:allMembers.map(m=>m.user_id)
+   };
+
+  }
+
+  const other=allMembers.find(m=>m.user_id!==user.id);
+  const p=other?profilesMap[other.user_id]:null;
+
+  return {
+   conversation:convoId,
+   id:p?.id||other?.user_id,
+   display_name:p?.display_name||'VYBEX User',
+   username:p?.username||'',
+   avatar_url:p?.avatar_url||'',
+   last:lastByConvo[convoId]?.body||'',
+   last_at:lastByConvo[convoId]?.created_at||'',
+   isGroup:false,
+   memberCount:allMembers.length,
+   memberIds:allMembers.map(m=>m.user_id)
+  };
+
+ });
+
+ renderContacts();
     }
-
     myProfile = {...myProfile, ...created};
 
   }else{
