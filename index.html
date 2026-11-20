@@ -61,7 +61,7 @@
    <div id="nameField" class="field hidden"><label>Your name</label><input id="name" name="name" maxlength="40" autocomplete="name" placeholder="Your display name"></div>
    <div class="field"><label>Email address</label><input id="email" name="username" type="email" autocomplete="username" placeholder="you@example.com"></div>
    <div class="field"><label>Password</label><div class="pass-wrap"><input id="password" name="password" type="password" autocomplete="current-password" placeholder="At least 8 characters"><button type="button" id="togglePass" class="eye-btn">👁️</button></div></div>
-   <div id="inviteField" class="field hidden"><label>Invite code</label><input id="invite" name="invite" autocomplete="off" placeholder="Ask the VYBEX owner for a code"></div>
+   <p class="hint">Connect with friends. Chat. Belong. Welcome to VYBEX!</p>
    <button class="primary" id="authButton" type="submit">Sign in</button><div class="error" id="authError" role="alert"></div>
    <p class="switch"><span id="switchText">New to VYBEX?</span> <button class="link" id="switchMode" type="button">Create account</button></p>
    <p class="hint">Private access only. Ask the VYBEX owner for an invite code.</p>
@@ -98,7 +98,7 @@
 <script>
 const SUPABASE_URL="https://omopkjzsurgrnijkxnge.supabase.co";
 const SUPABASE_ANON_KEY="sb_publishable_AMk2LFpNKcDUZfNslhjsHQ_4QnrRbyR";
-const INVITE_CODE="VYBEX-2026";
+
 const $=id=>document.getElementById(id);
 let client=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 let user=null,currentConversation=null,channel=null,presenceChannel=null,inboxChannel=null,signupMode=false,contacts=[],onlineUsers=new Set(),myProfile={display_name:"",username:"",avatar_url:""},profilesCache={};
@@ -112,27 +112,178 @@ function showModal(title,placeholder,btnText){
   });
 }
 function authMode(signup){
-  $('password').setAttribute('autocomplete', signup ? 'new-password' : 'current-password'); $('authPanel').setAttribute('action', signup ? '/signup' : '/login'); signupMode=signup;
-  $('authButton').textContent=signup?'Create account':'Sign in'; $('switchMode').textContent=signup?'Sign in':'Create account'; $('switchText').textContent=signup?'Already have an account?':'New to VYBEX?'; $('authTitle').textContent=signup?'Create your account':'Welcome back'; $('authSub').textContent=signup?'Join VYBEX to chat and connect':'Sign in to continue to VYBEX'; $('nameField').classList.toggle('hidden',!signup); $('inviteField').classList.toggle('hidden',!signup);
-}
+  signupMode = signup;
+
+  $('password').setAttribute(
+    'autocomplete',
+    signup ? 'new-password' : 'current-password'
+  );
+
+  $('authTitle').textContent = signup
+    ? 'Create your account'
+    : 'Welcome back';
+
+  $('authSub').textContent = signup
+    ? 'Join VYBEX to chat and connect'
+    : 'Sign in to continue to VYBEX';
+
+  $('authButton').textContent = signup
+    ? 'Create account'
+    : 'Sign in';
+
+  $('switchMode').textContent = signup
+    ? 'Sign in'
+    : 'Create account';
+
+  $('switchText').textContent = signup
+    ? 'Already have an account?'
+    : 'New to VYBEX?';
+
+  $('nameField').classList.toggle('hidden', !signup);
+    }                                                                                                 
 authMode(false);
 $('switchMode').onclick=(e)=>{ e.preventDefault(); authMode(!signupMode); };
 $('togglePass').onclick=()=>{ const pw=$('password'); const show=pw.type==='password'; pw.type=show?'text':'password'; $('togglePass').textContent=show?'🙈':'👁️'; };
-$('authPanel').addEventListener('submit', async (e)=>{
-  e.preventDefault(); const email=$('email').value.trim(), password=$('password').value; $('authError').textContent=''; if(!email||!password){ $('authError').textContent='Enter email and password.'; return; }
-  $('authButton').disabled=true; $('authButton').textContent=signupMode?'Creating...':'Signing in...';
+ $('authPanel').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+
+  const email = $('email').value.trim();
+  const password = $('password').value;
+  const display_name = $('name').value.trim();
+
+  $('authError').textContent = '';
+
+  if(!email || !password){
+    $('authError').textContent = 'Enter email and password.';
+    return;
+  }
+
+  if(signupMode && password.length < 8){
+    $('authError').textContent =
+      'Password must contain at least 8 characters.';
+    return;
+  }
+
+  if(signupMode && !display_name){
+    $('authError').textContent =
+      'Please enter your display name.';
+    return;
+  }
+
+  $('authButton').disabled = true;
+  $('authButton').textContent =
+    signupMode ? 'Creating account...' : 'Signing in...';
+
   try{
-    if(signupMode){ if($('invite').value.trim()!==INVITE_CODE) throw new Error('Wrong invite code.'); const display_name=$('name').value.trim()||email.split('@')[0]; const {data,error}=await client.auth.signUp({email,password,options:{data:{display_name}}}); if(error) throw error; if(data.user){ await client.from('profiles').upsert({id:data.user.id,display_name,username:email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g,'')}); user=data.user; enterApp(); } else $('authError').textContent='Check your email to confirm.'; }
-    else { const {data,error}=await client.auth.signInWithPassword({email,password}); if(error) throw error; user=data.user; enterApp(); }
-  }catch(err){ $('authError').textContent=err.message; } finally{ $('authButton').disabled=false; $('authButton').textContent=signupMode?'Create account':'Sign in'; }
-});
+
+    if(signupMode){
+
+      const {data, error} = await client.auth.signUp({
+        email,
+        password,
+        options:{
+          data:{
+            display_name
+          }
+        }
+      });
+
+      if(error) throw error;
+
+      if(data.session){
+        user = data.user;
+        await enterApp();
+      }else{
+        $('authError').textContent =
+          'Account created! Please check your email to confirm your account.';
+      }
+
+    }else{
+
+      const {data, error} =
+        await client.auth.signInWithPassword({
+          email,
+          password
+        });
+
+      if(error) throw error;
+
+      user = data.user;
+      await enterApp();
+
+    }
+
+  }catch(err){
+
+    $('authError').textContent = err.message;
+
+  }finally{
+
+    $('authButton').disabled = false;
+    $('authButton').textContent =
+      signupMode ? 'Create account' : 'Sign in';
+
+  }
+ });
 function setAvatar(el,url,fallback){if(!el)return; if(url){el.innerHTML=`<img src="${escapeHtml(url)}" alt="">`} else el.textContent=(fallback||"V").slice(0,1).toUpperCase()}
 async function loadMyProfile(){
- const {data,error}=await client.from('profiles').select('id,display_name,username,avatar_url').eq('id',user.id).maybeSingle(); if(error){console.warn(error.message);return}
- if(data) myProfile={...myProfile,...data}; profilesCache[user.id]=myProfile;
- const name=myProfile.display_name||user.user_metadata?.display_name||user.email.split('@')[0];
- $('myName').textContent=name; $('myUsername').textContent=myProfile.username?'@'+myProfile.username:'Choose a username'; setAvatar($('myAvatar'),myProfile.avatar_url,name); setAvatar($('profilePreview'),myProfile.avatar_url,name);
-}
+
+  const {data, error} = await client
+    .from('profiles')
+    .select('id,display_name,username,avatar_url')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if(error){
+    console.warn(error.message);
+    return;
+  }
+
+  if(!data){
+
+    const display_name =
+      user.user_metadata?.display_name ||
+      user.email.split('@')[0];
+
+    const {data:created, error:createError} =
+      await client.from('profiles').upsert({
+        id:user.id,
+        display_name,
+        username:null
+      }).select().single();
+
+    if(createError){
+      console.warn(createError.message);
+      return;
+    }
+
+    myProfile = {...myProfile, ...created};
+
+  }else{
+
+    myProfile = {...myProfile, ...data};
+
+  }
+
+  profilesCache[user.id] = myProfile;
+
+  const name =
+    myProfile.display_name ||
+    user.user_metadata?.display_name ||
+    user.email.split('@')[0];
+
+  $('myName').textContent = name;
+
+  $('myUsername').textContent =
+    myProfile.username
+      ? '@' + myProfile.username
+      : 'Choose a username';
+
+  setAvatar($('myAvatar'), myProfile.avatar_url, name);
+
+  setAvatar($('profilePreview'), myProfile.avatar_url, name);
+
+      }
 function openProfileEditor(){ $('profileDisplayName').value=myProfile.display_name||user.user_metadata?.display_name||''; $('profileUsername').value=myProfile.username||''; $('profileError').textContent=''; setAvatar($('profilePreview'),myProfile.avatar_url,myProfile.display_name||'V'); $('profileModal').classList.remove('hidden'); }
 $('editProfile').onclick=openProfileEditor; $('cancelProfile').onclick=()=>$('profileModal').classList.add('hidden'); $('profileModal').addEventListener('click',e=>{if(e.target===$('profileModal'))$('profileModal').classList.add('hidden')});
 $('avatarFile').onchange=()=>{const f=$('avatarFile').files[0]; if(f){ setAvatar($('profilePreview'),URL.createObjectURL(f),$('profileDisplayName').value||'V'); }};
