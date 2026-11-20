@@ -56,7 +56,7 @@
 <section class="auth-wrap" id="auth">
  <div class="card">
   <div class="auth-head"><div class="brand"><span class="logo">V</span> VYBEX</div><p>CONNECT. CHAT. BELONG.</p></div>
-  <form id="authPanel" autocomplete="on" method="post" action="#">
+  <form id="authPanel" autocomplete="on" method="post" action="/login">
    <h1 id="authTitle">Welcome back</h1><p class="sub" id="authSub">Sign in to continue to VYBEX</p>
    <div id="nameField" class="field hidden"><label>Your name</label><input id="name" name="name" maxlength="40" autocomplete="name" placeholder="Your display name"></div>
    <div class="field"><label>Email address</label><input id="email" name="username" type="email" autocomplete="username" placeholder="you@example.com"></div>
@@ -100,11 +100,7 @@ const SUPABASE_URL="https://omopkjzsurgrnijkxnge.supabase.co";
 const SUPABASE_ANON_KEY="sb_publishable_AMk2LFpNKcDUZfNslhjsHQ_4QnrRbyR";
 const INVITE_CODE="VYBEX-2026";
 const $=id=>document.getElementById(id);
-// Build the confirmation redirect from the actual deployed GitHub Pages URL.
-const APP_REDIRECT_URL = window.location.origin + window.location.pathname;
-let client=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{
-  auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
-});
+let client=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 let user=null,currentConversation=null,channel=null,presenceChannel=null,inboxChannel=null,signupMode=false,contacts=[],onlineUsers=new Set(),myProfile={display_name:"",username:"",avatar_url:""},profilesCache={};
 function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function showModal(title,placeholder,btnText){
@@ -126,30 +122,8 @@ $('authPanel').addEventListener('submit', async (e)=>{
   e.preventDefault(); const email=$('email').value.trim(), password=$('password').value; $('authError').textContent=''; if(!email||!password){ $('authError').textContent='Enter email and password.'; return; }
   $('authButton').disabled=true; $('authButton').textContent=signupMode?'Creating...':'Signing in...';
   try{
-    if(signupMode){
-      if($('invite').value.trim()!==INVITE_CODE) throw new Error('Wrong invite code.');
-      if(password.length<8) throw new Error('Password must be at least 8 characters.');
-      const display_name=$('name').value.trim()||email.split('@')[0];
-      const {data,error}=await client.auth.signUp({
-        email,password,
-        options:{data:{display_name},emailRedirectTo:APP_REDIRECT_URL}
-      });
-      if(error) throw error;
-      if(data.session){
-        user=data.user;
-        const username=email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,20);
-        const {error:profileError}=await client.from('profiles').upsert({id:data.user.id,display_name,username});
-        if(profileError) console.warn('Profile setup:',profileError.message);
-        await enterApp();
-      }else{
-        $('authError').textContent='Account created. Check your email and confirm your address, then return here to sign in.';
-      }
-    }else{
-      const {data,error}=await client.auth.signInWithPassword({email,password});
-      if(error) throw error;
-      user=data.user;
-      await enterApp();
-    }
+    if(signupMode){ if($('invite').value.trim()!==INVITE_CODE) throw new Error('Wrong invite code.'); const display_name=$('name').value.trim()||email.split('@')[0]; const {data,error}=await client.auth.signUp({email,password,options:{data:{display_name}}}); if(error) throw error; if(data.user){ await client.from('profiles').upsert({id:data.user.id,display_name,username:email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g,'')}); user=data.user; enterApp(); } else $('authError').textContent='Check your email to confirm.'; }
+    else { const {data,error}=await client.auth.signInWithPassword({email,password}); if(error) throw error; user=data.user; enterApp(); }
   }catch(err){ $('authError').textContent=err.message; } finally{ $('authButton').disabled=false; $('authButton').textContent=signupMode?'Create account':'Sign in'; }
 });
 function setAvatar(el,url,fallback){if(!el)return; if(url){el.innerHTML=`<img src="${escapeHtml(url)}" alt="">`} else el.textContent=(fallback||"V").slice(0,1).toUpperCase()}
@@ -251,6 +225,7 @@ $('groupGo').onclick=async()=>{
   const name=$('groupName').value.trim();
   const raw=$('groupMembers').value.trim();
   if(!name){ $('groupError').textContent='Enter a group name.'; return; }
+  if(name.length>60){ $('groupError').textContent='Group name must be 60 characters or fewer.'; return; }
   const usernames=[...new Set(raw.split(',').map(s=>s.trim().replace(/^@/,'' ).toLowerCase()).filter(Boolean))];
   if(usernames.length<2){ $('groupError').textContent='Add at least 2 people, comma separated.'; return; }
   $('groupGo').disabled=true; $('groupError').textContent='Creating group…';
@@ -264,12 +239,14 @@ $('groupGo').onclick=async()=>{
       if(p.id===user.id) throw new Error('You are already in the group, don\'t add yourself.');
       if(!memberIds.includes(p.id)) memberIds.push(p.id);
     }
-    const groupId=crypto.randomUUID();
-    const {error:gErr}=await client.from('groups').insert({id:groupId,name,created_by:user.id});
-    if(gErr) throw gErr;
-    const rows=[{conversation_id:groupId,user_id:user.id}, ...memberIds.map(id=>({conversation_id:groupId,user_id:id}))];
-    const {error:mErr}=await client.from('conversation_members').insert(rows);
-    if(mErr) throw mErr;
+    // Create the conversation, group record, and all memberships atomically
+    // through the protected Supabase RPC. The RPC returns the new conversation ID.
+    const {data:groupId,error:createError}=await client.rpc('create_group',{
+      p_name:name,
+      p_member_ids:memberIds
+    });
+    if(createError) throw createError;
+    if(!groupId) throw new Error('The group was not created. Please try again.');
     $('groupModal').classList.add('hidden');
     await loadContacts();
     const chat=contacts.find(c=>c.conversation===groupId);
