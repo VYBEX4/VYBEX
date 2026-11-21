@@ -1,66 +1,33 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#090d18"><title>VYBEX — Connect. Chat. Belong.</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090d18">
+<title>VYBEX — Connect. Chat. Belong.</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--bg:#090d18;--panel:#111827;--panel2:#172235;--line:#26334a;--blue:#4b8cff;--cyan:#48d8e8;--text:#f4f7ff;--muted:#93a1b8;--green:#35d49a}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0%,#142b51 0,transparent 32%),var(--bg);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif;min-height:100vh}button,input{font:inherit}button{cursor:pointer}.hidden{display:none!important}
-.brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:25px;letter-spacing:2px}.logo{width:38px;height:38px;border-radius:13px;background:linear-gradient(135deg,var(--blue),var(--cyan));display:grid;place-items:center;color:#07111f;font-weight:1000;font-size:22px}.muted{color:var(--muted)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:25px;letter-spacing:2px}.logo{width:38px;height:38px;border-radius:13px;background:linear-gradient(135deg,var(--blue),var(--cyan));display:grid;place-items:center;color:#07111f;font-weight:1000;font-size:22px}
 .auth-wrap{min-height:100vh;display:grid;place-items:center;padding:22px}.card{width:min(100%,440px);background:#111827f2;border:1px solid var(--line);border-radius:24px;padding:32px;box-shadow:0 25px 90px #0008}.auth-head{text-align:center;margin-bottom:27px}.auth-head .brand{justify-content:center}.auth-head p{font-size:13px;color:var(--muted)}h1{font-size:25px;margin:0 0 8px}.sub{font-size:14px;color:var(--muted);margin:0 0 22px}.field{margin:14px 0}.field label{display:block;font-size:13px;margin-bottom:7px;color:#c4cee0}.field input,.search input,.composer input{width:100%;padding:13px 14px;background:#0b1220;border:1px solid var(--line);border-radius:12px;color:white;outline:none}.field input:focus,.search input:focus,.composer input:focus{border-color:var(--blue)}.primary{width:100%;padding:14px;border:0;border-radius:12px;background:linear-gradient(100deg,var(--blue),#5d72ff);color:white;font-weight:800;margin-top:8px}.switch{text-align:center;font-size:13px;color:var(--muted);margin-top:18px}.link{border:0;background:none;color:#79adff;font-weight:700}.hint{font-size:11px;color:#7f8da4;line-height:1.5;margin-top:20px;text-align:center}.error{color:#ff9292;font-size:13px;min-height:18px;margin-top:10px}
-.app{height:100vh;min-height:560px;max-width:1500px;margin:auto;padding:16px;display:grid;grid-template-columns:320px 1fr;gap:15px}.sidebar,.chat{background:#111827ed;border:1px solid var(--line);border-radius:21px;overflow:hidden;min-height:0}.sidebar{display:flex;flex-direction:column}.side-top{padding:20px;border-bottom:1px solid var(--line)}.side-brand{display:flex;justify-content:space-between;align-items:center}.icon{width:38px;height:38px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);color:white}.search{margin-top:17px}.section{padding:17px 20px 7px;color:#75849b;font-size:11px;font-weight:800;letter-spacing:1.5px}.contact{display:flex;align-items:center;gap:11px;padding:13px 17px;cursor:pointer;border-left:3px solid transparent}.contact:hover,.contact.active{background:#1a2940;border-left-color:var(--blue)}.avatar{width:42px;height:42px;flex:0 0 42px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,#344f80,#5368aa);font-weight:800;overflow:hidden}.contact-info{min-width:0;flex:1}.contact-name{font-size:14px;font-weight:750}.preview{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px}.side-bottom{margin-top:auto;padding:14px 17px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px}.side-bottom .avatar{border-radius:50%;width:36px;height:36px;flex-basis:36px}.avatar{overflow:hidden;flex-shrink:0}
-.avatar img{width:100%!important;height:100%!important;object-fit:cover!important;object-position:center 30%!important;display:block;border-radius:inherit}
-.profile-preview{width:90px!important;height:90px!important;min-width:90px;min-height:90px;border-radius:50%!important;padding:0!important;overflow:hidden!important;display:block!important;background:#1d2a40}
-.profile-preview img{width:100%;height:100%;object-fit:cover;object-position:center 30%;display:block}.profile-name{font-size:13px;font-weight:700}.status{font-size:11px;color:var(--green);margin-top:3px}.chat{display:flex;flex-direction:column}.chat-head{padding:16px 21px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:11px}.chat-head .avatar{border-radius:50%}.chat-person{flex:1}.chat-person strong{font-size:14px}.online{font-size:11px;color:var(--green);margin-top:4px}.messages{flex:1;overflow:auto;padding:25px clamp(14px,5vw,65px);display:flex;flex-direction:column;gap:14px}.empty{margin:auto;text-align:center;color:var(--muted)}.msg{max-width:min(75%,480px);display:flex;flex-direction:column;gap:5px;position:relative}.msg.in{align-self:flex-start}.msg.out{align-self:flex-end;align-items:flex-end}.bubble{padding:11px 14px;border-radius:16px;background:#1d2a40;font-size:14px;line-height:1.5;overflow-wrap:anywhere;cursor:pointer}.out .bubble{background:linear-gradient(130deg,#326fdb,#535fe0);border-bottom-right-radius:5px}.in .bubble{border-bottom-left-radius:5px}.stamp{font-size:10px;color:#8190a7;padding:0 4px}.composer{padding:14px 19px;border-top:1px solid var(--line);display:flex;gap:9px}.composer input{flex:1;min-width:0}.send{width:47px;border:0;border-radius:13px;background:var(--blue);color:white;font-size:18px}.back{display:none}.delete-chat{margin-left:auto;color:#ff9b9b}
-.profile-tools{display:flex;align-items:center;gap:9px;min-width:0;flex:1}
-.profile-modal{position:fixed;inset:0;z-index:20;background:#050914d9;display:grid;place-items:center;padding:18px}
-.profile-card{width:min(100%,430px);background:#111827;border:1px solid var(--line);border-radius:22px;padding:23px;box-shadow:0 20px 70px #0009}
-.profile-card h2{margin:0 0 18px;font-size:21px}
-.profile-card label{display:block;font-size:13px;color:#c4cee0;margin:13px 0 6px}
-.profile-card input{width:100%;padding:12px;background:#0b1220;border:1px solid var(--line);border-radius:11px;color:white}
-.profile-actions{display:flex;gap:9px;margin-top:17px}
-.profile-actions button{flex:1;padding:12px;border:0;border-radius:11px;font-weight:750}
-.profile-save{background:linear-gradient(100deg,var(--blue),#5d72ff);color:white}
-.profile-cancel{background:#1d2a40;color:white}
-.profile-preview{width:76px;height:76px;border-radius:50%;margin:0 auto 10px;font-size:28px}
-.edited-label{font-size:10px;color:#9aa9bf;margin-left:5px}
-.message-menu{position:fixed;z-index:50;min-width:190px;padding:6px;background:#172235;border:1px solid #34445f;border-radius:12px;box-shadow:0 14px 40px #0009;display:flex;flex-direction:column}
-.message-menu button{border:0;background:transparent;color:#f4f7ff;text-align:left;padding:11px 13px;border-radius:8px;font-size:13px}
-.message-menu button:hover{background:#293b57}
-.message-menu button.danger{color:#ff9b9b}
-.modal{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.7);display:grid;place-items:center;padding:18px}
-.modal-card{width:min(100%,380px);background:#111827;border:1px solid var(--line);border-radius:18px;padding:20px}
-.modal-card h3{margin:0 0 12px}
-.modal-card input{width:100%;padding:12px;background:#0b1220;border:1px solid var(--line);border-radius:10px;color:white;outline:none}
-.modal-actions{display:flex;gap:10px;margin-top:14px}
-.modal-actions button{flex:1;padding:12px;border:0;border-radius:10px;font-weight:700}
-.btn-cancel{background:#1d2a40;color:white}.btn-go{background:#4b8cff;color:white}
-#deleteChatBtn{display:none}
+.app{height:100vh;min-height:560px;max-width:1500px;margin:auto;padding:16px;display:grid;grid-template-columns:320px 1fr;gap:15px}.sidebar,.chat{background:#111827ed;border:1px solid var(--line);border-radius:21px;overflow:hidden;min-height:0}.sidebar{display:flex;flex-direction:column}.side-top{padding:20px;border-bottom:1px solid var(--line)}.side-brand{display:flex;justify-content:space-between;align-items:center}.icon{width:38px;height:38px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);color:white}.search{margin-top:17px}.section{padding:17px 20px 7px;color:#75849b;font-size:11px;font-weight:800;letter-spacing:1.5px}.contact-list{overflow:auto;flex:1}.contact{display:flex;align-items:center;gap:11px;padding:13px 17px;cursor:pointer;border-left:3px solid transparent}.contact:hover,.contact.active{background:#1a2940;border-left-color:var(--blue)}.avatar{width:42px;height:42px;flex:0 0 42px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,#344f80,#5368aa);font-weight:800;overflow:hidden;position:relative;padding:0}.avatar img{width:100%;height:100%;object-fit:cover;object-position:center 30%;display:block;border-radius:inherit}.contact-info{min-width:0;flex:1}.contact-name{font-size:14px;font-weight:750;overflow-wrap:anywhere}.preview{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px}.side-bottom{padding:14px 17px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px}.side-bottom .avatar{border-radius:50%;width:40px;height:40px;flex-basis:40px}.profile-tools{display:flex;align-items:center;gap:9px;min-width:0;flex:1}.profile-name{font-size:13px;font-weight:700}.status{font-size:11px;color:var(--green);margin-top:3px}
+.chat{display:flex;flex-direction:column}.chat-head{padding:16px 21px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:11px}.chat-head .avatar{border-radius:50%}.chat-person{flex:1;min-width:0}.chat-person strong{font-size:14px}.online{font-size:11px;color:var(--green);margin-top:4px}.messages{flex:1;overflow:auto;padding:25px clamp(14px,5vw,65px);display:flex;flex-direction:column;gap:14px}.empty{margin:auto;text-align:center;color:var(--muted)}.msg{max-width:min(75%,480px);display:flex;flex-direction:column;gap:5px;position:relative}.msg.in{align-self:flex-start}.msg.out{align-self:flex-end;align-items:flex-end}.bubble{padding:11px 14px;border-radius:16px;background:#1d2a40;font-size:14px;line-height:1.5;overflow-wrap:anywhere;cursor:pointer}.out .bubble{background:linear-gradient(130deg,#326fdb,#535fe0);border-bottom-right-radius:5px}.in .bubble{border-bottom-left-radius:5px}.stamp{font-size:10px;color:#8190a7;padding:0 4px}.composer{padding:14px 19px;border-top:1px solid var(--line);display:flex;gap:9px}.composer input{flex:1;min-width:0}.send{width:47px;border:0;border-radius:13px;background:var(--blue);color:white;font-size:18px}.back{display:none}.delete-chat{margin-left:auto;color:#ff9b9b}
+.profile-modal{position:fixed;inset:0;z-index:20;background:#050914d9;display:grid;place-items:center;padding:18px}.profile-card{width:min(100%,430px);background:#111827;border:1px solid var(--line);border-radius:22px;padding:23px;box-shadow:0 20px 70px #0009}.profile-card h2{margin:0 0 18px;font-size:21px}.profile-card label{display:block;font-size:13px;color:#c4cee0;margin:13px 0 6px}.profile-card input{width:100%;padding:12px;background:#0b1220;border:1px solid var(--line);border-radius:11px;color:white}.profile-preview{width:90px;height:90px;min-width:90px;border-radius:50%;margin:0 auto 10px}.profile-actions{display:flex;gap:9px;margin-top:17px}.profile-actions button{flex:1;padding:12px;border:0;border-radius:11px;font-weight:750}.profile-save{background:linear-gradient(100deg,var(--blue),#5d72ff);color:white}.profile-cancel{background:#1d2a40;color:white}
+.message-menu{position:fixed;z-index:50;min-width:190px;padding:6px;background:#172235;border:1px solid #34445f;border-radius:12px;box-shadow:0 14px 40px #0009;display:flex;flex-direction:column}.message-menu button{border:0;background:transparent;color:#f4f7ff;text-align:left;padding:11px 13px;border-radius:8px;font-size:13px}.message-menu button:hover{background:#293b57}.message-menu button.danger{color:#ff9b9b}
+.modal{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.7);display:grid;place-items:center;padding:18px}.modal-card{width:min(100%,380px);background:#111827;border:1px solid var(--line);border-radius:18px;padding:20px}.modal-card h3{margin:0 0 12px}.modal-card input{width:100%;padding:12px;background:#0b1220;border:1px solid var(--line);border-radius:10px;color:white;outline:none}.modal-actions{display:flex;gap:10px;margin-top:14px}.modal-actions button{flex:1;padding:12px;border:0;border-radius:10px;font-weight:700}.btn-cancel{background:#1d2a40;color:white}.btn-go{background:#4b8cff;color:white}#deleteChatBtn{display:none}.pass-wrap{position:relative;display:flex;align-items:center}.pass-wrap input{padding-right:44px!important}.eye-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border:0;background:transparent;font-size:17px;cursor:pointer;opacity:.7}.sender-name{font-size:11px;font-weight:700;color:#79adff;padding:0 4px}.group-badge{font-size:10px;background:#26334a;padding:2px 7px;border-radius:20px;color:#93a1b8;margin-left:6px}.top-actions{display:flex;gap:8px}.edited-label{font-size:10px;color:#9aa9bf;margin-left:5px}.muted{color:var(--muted)}
 @media(max-width:700px){.app{height:100dvh;min-height:0;padding:0;display:block}.sidebar,.chat{height:100%;border:0;border-radius:0}.app.chat-open .sidebar{display:none}.app:not(.chat-open) .chat{display:none}.chat-head{padding:12px}.messages{padding:18px 13px}.composer{padding:11px}.back{display:block}.card{padding:25px 21px}}
-.avatar{overflow:hidden!important;padding:0!important;flex-shrink:0!important;position:relative!important}
-.avatar img{width:100%!important;height:100%!important;min-width:100%!important;min-height:100%!important;object-fit:cover!important;object-position:center 25%!important;display:block!important;border-radius:inherit!important}
-.side-bottom .avatar,#myAvatar{width:40px!important;height:40px!important;flex:0 0 40px!important;border-radius:50%!important;overflow:hidden!important}
-.contact .avatar{width:42px!important;height:42px!important;flex:0 0 42px!important;border-radius:14px!important}
-.profile-preview{width:90px!important;height:90px!important;border-radius:50%!important}
-.pass-wrap{position:relative;display:flex;align-items:center}
-.pass-wrap input{padding-right:44px!important}
-.eye-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border:0;background:transparent;font-size:17px;cursor:pointer;opacity:.7}
-.eye-btn:hover{opacity:1}
-.sender-name{font-size:11px;font-weight:700;color:#79adff;padding:0 4px}
-.group-badge{font-size:10px;background:#26334a;padding:2px 7px;border-radius:20px;color:#93a1b8;margin-left:6px}
-.top-actions{display:flex;gap:8px}
 </style>
 </head>
 <body>
 <section class="auth-wrap" id="auth">
  <div class="card">
   <div class="auth-head"><div class="brand"><span class="logo">V</span> VYBEX</div><p>CONNECT. CHAT. BELONG.</p></div>
-  <form id="authPanel" autocomplete="on" method="post" action="/login">
+  <form id="authPanel" autocomplete="on">
    <h1 id="authTitle">Welcome back</h1><p class="sub" id="authSub">Sign in to continue to VYBEX</p>
-   <div id="nameField" class="field hidden"><label>Your name</label><input id="name" name="name" maxlength="40" autocomplete="name" placeholder="Your display name"></div>
-   <div class="field"><label>Email address</label><input id="email" name="username" type="email" autocomplete="username" placeholder="you@example.com"></div>
-   <div class="field"><label>Password</label><div class="pass-wrap"><input id="password" name="password" type="password" autocomplete="current-password" placeholder="At least 8 characters"><button type="button" id="togglePass" class="eye-btn">👁️</button></div></div>
+   <div id="nameField" class="field hidden"><label>Your name</label><input id="name" maxlength="40" autocomplete="name" placeholder="Your display name"></div>
+   <div class="field"><label>Email address</label><input id="email" type="email" autocomplete="username" placeholder="you@example.com" required></div>
+   <div class="field"><label>Password</label><div class="pass-wrap"><input id="password" type="password" autocomplete="current-password" placeholder="At least 8 characters" required><button type="button" id="togglePass" class="eye-btn">👁️</button></div></div>
    <p class="hint">Connect with friends. Chat. Belong. Welcome to VYBEX!</p>
    <button class="primary" id="authButton" type="submit">Sign in</button><div class="error" id="authError" role="alert"></div>
    <p class="switch"><span id="switchText">New to VYBEX?</span> <button class="link" id="switchMode" type="button">Create account</button></p>
@@ -70,8 +37,8 @@
 </section>
 <div class="app hidden" id="app">
  <aside class="sidebar">
-  <div class="side-top"><div class="side-brand"><div class="brand"><span class="logo">V</span> VYBEX</div><div class="top-actions"><button class="icon" id="newGroup" title="Create group">👥</button><button class="icon" id="newChat" title="Start a chat">＋</button></div></div><div class="search"><input id="search" placeholder="Search people…"></div></div>
-  <div class="section">YOUR CHATS</div><div id="contacts"></div>
+  <div class="side-top"><div class="side-brand"><div class="brand"><span class="logo">V</span> VYBEX</div><div class="top-actions"><button class="icon" id="newGroup" title="Create group">👥</button><button class="icon" id="newChat" title="Start a chat">＋</button></div></div><div class="search"><input id="search" placeholder="Search chats and people…"></div></div>
+  <div class="section">YOUR CHATS</div><div id="contacts" class="contact-list"></div>
   <div class="side-bottom"><div class="avatar" id="myAvatar">V</div><div class="profile-tools"><div style="min-width:0"><div class="profile-name" id="myName">You</div><div class="status" id="myUsername">Choose a username</div></div><button class="icon" id="editProfile" title="Edit profile">✎</button></div><button class="icon" id="logout" title="Sign out">↪</button></div>
  </aside>
  <main class="chat">
@@ -81,485 +48,337 @@
  </main>
 </div>
 <div class="message-menu hidden" id="messageMenu"></div>
-<div class="profile-modal hidden" id="profileModal">
- <div class="profile-card">
-  <h2>Edit your profile</h2><div class="avatar profile-preview" id="profilePreview">V</div>
-  <label>Profile picture</label><input id="avatarFile" type="file" accept="image/*">
-  <label>Display name</label><input id="profileDisplayName" maxlength="40" placeholder="Your display name">
-  <label>Username</label><input id="profileUsername" maxlength="20" placeholder="e.g. axel_gh">
-  <div class="muted" style="font-size:11px;margin-top:6px">Use 3–20 letters, numbers or underscores.</div>
-  <div class="error" id="profileError"></div>
-  <div class="profile-actions"><button class="profile-cancel" id="cancelProfile" type="button">Cancel</button><button class="profile-save" id="saveProfile" type="button">Save profile</button></div>
- </div>
-</div>
+<div class="profile-modal hidden" id="profileModal"><div class="profile-card">
+ <h2>Edit your profile</h2><div class="avatar profile-preview" id="profilePreview">V</div>
+ <label>Profile picture</label><input id="avatarFile" type="file" accept="image/*">
+ <label>Display name</label><input id="profileDisplayName" maxlength="40" placeholder="Your display name">
+ <label>Username</label><input id="profileUsername" maxlength="20" placeholder="e.g. axel_gh">
+ <div class="muted" style="font-size:11px;margin-top:6px">Use 3–20 letters, numbers or underscores.</div>
+ <div class="error" id="profileError"></div><div class="profile-actions"><button class="profile-cancel" id="cancelProfile" type="button">Cancel</button><button class="profile-save" id="saveProfile" type="button">Save profile</button></div>
+</div></div>
 <div class="modal hidden" id="genericModal"><div class="modal-card"><h3 id="modalTitle">New Chat</h3><input id="modalInput" placeholder=""><div class="error" id="modalError"></div><div class="modal-actions"><button class="btn-cancel" id="modalCancel" type="button">Cancel</button><button class="btn-go" id="modalGo" type="button">Continue</button></div></div></div>
-<div class="modal hidden" id="groupModal"><div class="modal-card"><h3>Create Group</h3><label style="display:block;font-size:13px;color:#c4cee0;margin:0 0 6px">Group name</label><input id="groupName" placeholder="e.g. Family, Boys, Class"><label style="display:block;font-size:13px;color:#c4cee0;margin:14px 0 6px">Add members (usernames, comma separated)</label><input id="groupMembers" placeholder="axie_a3, kwame_gh"><div class="muted" style="font-size:11px;margin-top:8px">Add at least 2 people. You are added automatically.</div><div class="error" id="groupError"></div><div class="modal-actions"><button class="btn-cancel" id="groupCancel" type="button">Cancel</button><button class="btn-go" id="groupGo" type="button">Create Group</button></div></div></div>
-
+<div class="modal hidden" id="groupModal"><div class="modal-card"><h3>Create Group</h3><label style="display:block;font-size:13px;color:#c4cee0;margin:0 0 6px">Group name</label><input id="groupName" maxlength="60" placeholder="e.g. Family, Boys, Class"><label style="display:block;font-size:13px;color:#c4cee0;margin:14px 0 6px">Add members (usernames, comma separated)</label><input id="groupMembers" placeholder="axie_a3, kwame_gh"><div class="muted" style="font-size:11px;margin-top:8px">Add at least 2 people. You are added automatically.</div><div class="error" id="groupError"></div><div class="modal-actions"><button class="btn-cancel" id="groupCancel" type="button">Cancel</button><button class="btn-go" id="groupGo" type="button">Create Group</button></div></div></div>
 <script>
+'use strict';
 const SUPABASE_URL="https://omopkjzsurgrnijkxnge.supabase.co";
 const SUPABASE_ANON_KEY="sb_publishable_AMk2LFpNKcDUZfNslhjsHQ_4QnrRbyR";
-
 const $=id=>document.getElementById(id);
-let client=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-let user=null,currentConversation=null,channel=null,presenceChannel=null,inboxChannel=null,signupMode=false,contacts=[],onlineUsers=new Set(),myProfile={display_name:"",username:"",avatar_url:""},profilesCache={};
-function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+let user=null,currentConversation=null,channel=null,presenceChannel=null,inboxChannel=null;
+let signupMode=false,contacts=[],onlineUsers=new Set();
+let myProfile={display_name:"",username:"",avatar_url:""},profilesCache={};
+
+function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+function setAvatar(el,url,fallback){if(!el)return;if(url)el.innerHTML=`<img src="${escapeHtml(url)}" alt="">`;else el.textContent=(fallback||"V").slice(0,1).toUpperCase();}
+function showError(id,message){$(id).textContent=message||'';}
+
 function showModal(title,placeholder,btnText){
-  return new Promise(resolve=>{
-    $('modalTitle').textContent=title; $('modalInput').placeholder=placeholder; $('modalInput').value=''; $('modalError').textContent=''; $('modalGo').textContent=btnText||'Continue'; $('genericModal').classList.remove('hidden');
-    setTimeout(()=>$('modalInput').focus(),50);
-    const close=(val)=>{ $('genericModal').classList.add('hidden'); $('modalGo').onclick=null; $('modalCancel').onclick=null; $('genericModal').onclick=null; resolve(val); };
-    $('modalCancel').onclick=()=>close(null); $('genericModal').onclick=(e)=>{ if(e.target===$('genericModal')) close(null); }; $('modalGo').onclick=()=>close($('modalInput').value.trim());
-  });
+ return new Promise(resolve=>{
+  $('modalTitle').textContent=title;$('modalInput').placeholder=placeholder;$('modalInput').value='';showError('modalError','');$('modalGo').textContent=btnText||'Continue';$('genericModal').classList.remove('hidden');
+  setTimeout(()=>$('modalInput').focus(),50);
+  const close=value=>{$('genericModal').classList.add('hidden');$('modalGo').onclick=null;$('modalCancel').onclick=null;$('genericModal').onclick=null;resolve(value);};
+  $('modalCancel').onclick=()=>close(null);$('genericModal').onclick=e=>{if(e.target===$('genericModal'))close(null);};$('modalGo').onclick=()=>close($('modalInput').value.trim());
+ });
 }
 function authMode(signup){
-  signupMode = signup;
-
-  $('password').setAttribute(
-    'autocomplete',
-    signup ? 'new-password' : 'current-password'
-  );
-
-  $('authTitle').textContent = signup
-    ? 'Create your account'
-    : 'Welcome back';
-
-  $('authSub').textContent = signup
-    ? 'Join VYBEX to chat and connect'
-    : 'Sign in to continue to VYBEX';
-
-  $('authButton').textContent = signup
-    ? 'Create account'
-    : 'Sign in';
-
-  $('switchMode').textContent = signup
-    ? 'Sign in'
-    : 'Create account';
-
-  $('switchText').textContent = signup
-    ? 'Already have an account?'
-    : 'New to VYBEX?';
-
-  $('nameField').classList.toggle('hidden', !signup);
-    }                                                                                                 
+ signupMode=signup;$('password').setAttribute('autocomplete',signup?'new-password':'current-password');
+ $('authTitle').textContent=signup?'Create your account':'Welcome back';
+ $('authSub').textContent=signup?'Join VYBEX to chat and connect':'Sign in to continue to VYBEX';
+ $('authButton').textContent=signup?'Create account':'Sign in';
+ $('switchMode').textContent=signup?'Sign in':'Create account';
+ $('switchText').textContent=signup?'Already have an account?':'New to VYBEX?';
+ $('nameField').classList.toggle('hidden',!signup);
+}
 authMode(false);
-$('switchMode').onclick=(e)=>{ e.preventDefault(); authMode(!signupMode); };
-$('togglePass').onclick=()=>{ const pw=$('password'); const show=pw.type==='password'; pw.type=show?'text':'password'; $('togglePass').textContent=show?'🙈':'👁️'; };
- $('authPanel').addEventListener('submit', async (e)=>{
-  e.preventDefault();
+$('switchMode').onclick=()=>authMode(!signupMode);
+$('togglePass').onclick=()=>{const p=$('password'),show=p.type==='password';p.type=show?'text':'password';$('togglePass').textContent=show?'🙈':'👁️';};
 
-  const email = $('email').value.trim();
-  const password = $('password').value;
-  const display_name = $('name').value.trim();
-
-  $('authError').textContent = '';
-
-  if(!email || !password){
-    $('authError').textContent = 'Enter email and password.';
-    return;
+$('authPanel').addEventListener('submit',async e=>{
+ e.preventDefault();const email=$('email').value.trim(),password=$('password').value,display_name=$('name').value.trim();showError('authError','');
+ if(!email||!password){showError('authError','Enter email and password.');return;}
+ if(signupMode&&password.length<8){showError('authError','Password must contain at least 8 characters.');return;}
+ if(signupMode&&!display_name){showError('authError','Please enter your display name.');return;}
+ $('authButton').disabled=true;$('authButton').textContent=signupMode?'Creating account…':'Signing in…';
+ try{
+  if(signupMode){
+   const {data,error}=await client.auth.signUp({email,password,options:{data:{display_name}}});
+   if(error)throw error;
+   if(data.session){user=data.user;await enterApp();}
+   else showError('authError','Account created! Please check your email to confirm your account.');
+  }else{
+   const {data,error}=await client.auth.signInWithPassword({email,password});if(error)throw error;user=data.user;await enterApp();
   }
+ }catch(err){showError('authError',err.message);}
+ finally{$('authButton').disabled=false;$('authButton').textContent=signupMode?'Create account':'Sign in';}
+});
 
-  if(signupMode && password.length < 8){
-    $('authError').textContent =
-      'Password must contain at least 8 characters.';
-    return;
-  }
-
-  if(signupMode && !display_name){
-    $('authError').textContent =
-      'Please enter your display name.';
-    return;
-  }
-
-  $('authButton').disabled = true;
-  $('authButton').textContent =
-    signupMode ? 'Creating account...' : 'Signing in...';
-
-  try{
-
-    if(signupMode){
-
-      const {data, error} = await client.auth.signUp({
-        email,
-        password,
-        options:{
-          data:{
-            display_name
-          }
-        }
-      });
-
-      if(error) throw error;
-
-      if(data.session){
-        user = data.user;
-        await enterApp();
-      }else{
-        $('authError').textContent =
-          'Account created! Please check your email to confirm your account.';
-      }
-
-    }else{
-
-      const {data, error} =
-        await client.auth.signInWithPassword({
-          email,
-          password
-        });
-
-      if(error) throw error;
-
-      user = data.user;
-      await enterApp();
-
-    }
-
-  }catch(err){
-
-    $('authError').textContent = err.message;
-
-  }finally{
-
-    $('authButton').disabled = false;
-    $('authButton').textContent =
-      signupMode ? 'Create account' : 'Sign in';
-
-  }
- });
-function setAvatar(el,url,fallback){if(!el)return; if(url){el.innerHTML=`<img src="${escapeHtml(url)}" alt="">`} else el.textContent=(fallback||"V").slice(0,1).toUpperCase()}
-async function loadContacts(){
-
- const mine = await client
-  .from('conversation_members')
-  .select('conversation_id')
-  .eq('user_id', user.id);
-
- if(mine.error){
-  $('contacts').innerHTML='<p class="muted" style="padding:0 20px;font-size:13px">Could not load chats.</p>';
-  return;
+async function loadMyProfile(){
+ if(!user)return;
+ const {data,error}=await client.from('profiles').select('id,display_name,username,avatar_url').eq('id',user.id).maybeSingle();
+ if(error){console.error('Profile load error:',error);throw error;}
+ if(data){myProfile={...myProfile,...data};}
+ else{
+  const display_name=user.user_metadata?.display_name||user.email?.split('@')[0]||'VYBEX User';
+  const {data:created,error:createError}=await client.from('profiles').insert({id:user.id,display_name,username:null,avatar_url:null}).select('id,display_name,username,avatar_url').single();
+  if(createError)throw createError;
+  myProfile={...myProfile,...created};
  }
+ profilesCache[user.id]=myProfile;
+ const name=myProfile.display_name||user.user_metadata?.display_name||user.email?.split('@')[0]||'You';
+ $('myName').textContent=name;$('myUsername').textContent=myProfile.username?'@'+myProfile.username:'Choose a username';
+ setAvatar($('myAvatar'),myProfile.avatar_url,name);setAvatar($('profilePreview'),myProfile.avatar_url,name);
+}
 
+async function loadContacts(){
+ if(!user)return;
+ const mine=await client.from('conversation_members').select('conversation_id').eq('user_id',user.id);
+ if(mine.error){$('contacts').innerHTML='<p class="muted" style="padding:0 20px;font-size:13px">Could not load chats.</p>';console.error(mine.error);return;}
  let ids=[...new Set((mine.data||[]).map(x=>x.conversation_id).filter(Boolean))];
+ if(!ids.length){contacts=[];renderContacts();return;}
 
- if(!ids.length){
-  contacts=[];
-  renderContacts();
-  return;
- }
-
- // Check deleted chats
- const deletedResult=await client
-  .from('deleted_chats')
-  .select('conversation_id,deleted_at')
-  .eq('user_id',user.id);
-
- const deletedList=deletedResult.error?[]:(deletedResult.data||[]);
- const hidden=new Set();
-
+ // Keep chats hidden for this user until another participant sends a new message.
+ const deletedResult=await client.from('deleted_chats').select('conversation_id,deleted_at').eq('user_id',user.id);
+ const deletedList=deletedResult.error?[]:(deletedResult.data||[]),hidden=new Set();
  for(const item of deletedList){
-
-  const newer=await client
-   .from('messages')
-   .select('id')
-   .eq('conversation_id',item.conversation_id)
-   .neq('sender_id',user.id)
-   .gt('created_at',item.deleted_at)
-   .limit(1);
-
-  if(newer.error){
-   hidden.add(item.conversation_id);
-   continue;
-  }
-
-  if(newer.data&&newer.data.length){
-   await client.from('deleted_chats')
-    .delete()
-    .eq('user_id',user.id)
-    .eq('conversation_id',item.conversation_id);
-  }else{
-   hidden.add(item.conversation_id);
-  }
+  const newer=await client.from('messages').select('id').eq('conversation_id',item.conversation_id).neq('sender_id',user.id).gt('created_at',item.deleted_at).limit(1);
+  if(newer.error){hidden.add(item.conversation_id);continue;}
+  if(newer.data?.length){await client.from('deleted_chats').delete().eq('user_id',user.id).eq('conversation_id',item.conversation_id);}
+  else hidden.add(item.conversation_id);
  }
-
  ids=ids.filter(id=>!hidden.has(id));
+ if(!ids.length){contacts=[];renderContacts();return;}
 
- if(!ids.length){
-  contacts=[];
-  renderContacts();
-  return;
+ const [membersResult,conversationsResult]=await Promise.all([
+  client.from('conversation_members').select('conversation_id,user_id').in('conversation_id',ids),
+  client.from('conversations').select('id,is_group,title').in('id',ids)
+ ]);
+ if(membersResult.error){console.error(membersResult.error);return;}
+ if(conversationsResult.error){console.error('Could not load conversation titles:',conversationsResult.error);return;}
+ const members=membersResult.data||[],conversationsMap={};
+ (conversationsResult.data||[]).forEach(c=>conversationsMap[c.id]=c);
+
+ // Fallback for older group records where groups.id matches the conversation id.
+ const groupIds=ids.filter(id=>conversationsMap[id]?.is_group);
+ let legacyGroupNames={};
+ if(groupIds.length){
+  const gr=await client.from('groups').select('id,name').in('id',groupIds);
+  if(!gr.error)(gr.data||[]).forEach(g=>legacyGroupNames[g.id]=g.name);
  }
 
- // Load conversation members
- const members=await client
-  .from('conversation_members')
-  .select('conversation_id,user_id')
-  .in('conversation_id',ids);
-
- if(members.error)return;
-
- // Load conversation information
- const conversationsResult=await client
-  .from('conversations')
-  .select('id,is_group,title')
-  .in('id',ids);
-
- if(conversationsResult.error){
-  console.error('Could not load conversations:',conversationsResult.error);
-  return;
- }
-
- const conversationsMap={};
-
- (conversationsResult.data||[]).forEach(c=>{
-  conversationsMap[c.id]=c;
- });
-
- // Load other users' profiles
- const otherIds=[
-  ...new Set(
-   (members.data||[])
-    .filter(m=>m.user_id!==user.id)
-    .map(m=>m.user_id)
-  )
- ];
-
+ const otherIds=[...new Set(members.filter(m=>m.user_id!==user.id).map(m=>m.user_id))];
  let profilesMap={};
-
  if(otherIds.length){
-
-  const profs=await client
-   .from('profiles')
-   .select('id,display_name,username,avatar_url')
-   .in('id',otherIds);
-
-  (profs.data||[]).forEach(p=>{
-   profilesMap[p.id]=p;
-   profilesCache[p.id]=p;
-  });
+  const profs=await client.from('profiles').select('id,display_name,username,avatar_url').in('id',otherIds);
+  if(profs.error)console.error('Could not load profiles:',profs.error);
+  (profs.data||[]).forEach(p=>{profilesMap[p.id]=p;profilesCache[p.id]=p;});
  }
+ const lastMsgs=await client.from('messages').select('conversation_id,body,created_at').in('conversation_id',ids).order('created_at',{ascending:false});
+ const lastByConvo={};(lastMsgs.data||[]).forEach(m=>{if(!lastByConvo[m.conversation_id])lastByConvo[m.conversation_id]=m;});
 
- // Load latest messages
- const lastMsgs=await client
-  .from('messages')
-  .select('conversation_id,body,created_at')
-  .in('conversation_id',ids)
-  .order('created_at',{ascending:false});
-
- const lastByConvo={};
-
- (lastMsgs.data||[]).forEach(m=>{
-  if(!lastByConvo[m.conversation_id]){
-   lastByConvo[m.conversation_id]=m;
-  }
- });
-
- // Build contacts list
  contacts=ids.map(convoId=>{
-
-  const allMembers=(members.data||[])
-   .filter(m=>m.conversation_id===convoId);
-
-  const conversation=conversationsMap[convoId];
-
+  const allMembers=members.filter(m=>m.conversation_id===convoId),conversation=conversationsMap[convoId];
   const isGroup=conversation?.is_group===true;
-
   if(isGroup){
-
-   return {
-    conversation:convoId,
-    id:convoId,
-    display_name:conversation?.title||'Group Chat',
-    username:'',
-    avatar_url:'',
-    last:lastByConvo[convoId]?.body||'',
-    last_at:lastByConvo[convoId]?.created_at||'',
-    isGroup:true,
-    memberCount:allMembers.length,
-    memberIds:allMembers.map(m=>m.user_id)
-   };
-
+   const actualTitle=(conversation.title||'').trim();
+   return {conversation:convoId,id:convoId,display_name:actualTitle||legacyGroupNames[convoId]||'Group Chat',username:'',avatar_url:'',last:lastByConvo[convoId]?.body||'',last_at:lastByConvo[convoId]?.created_at||'',isGroup:true,memberCount:allMembers.length,memberIds:allMembers.map(m=>m.user_id)};
   }
-
-  const other=allMembers.find(m=>m.user_id!==user.id);
-  const p=other?profilesMap[other.user_id]:null;
-
-  return {
-   conversation:convoId,
-   id:p?.id||other?.user_id,
-   display_name:p?.display_name||'VYBEX User',
-   username:p?.username||'',
-   avatar_url:p?.avatar_url||'',
-   last:lastByConvo[convoId]?.body||'',
-   last_at:lastByConvo[convoId]?.created_at||'',
-   isGroup:false,
-   memberCount:allMembers.length,
-   memberIds:allMembers.map(m=>m.user_id)
-  };
-
- });
-
- renderContacts();
-    }
-    myProfile = {...myProfile, ...created};
-
-  }else{
-
-    myProfile = {...myProfile, ...data};
-
-  }
-
-  profilesCache[user.id] = myProfile;
-
-  const name =
-    myProfile.display_name ||
-    user.user_metadata?.display_name ||
-    user.email.split('@')[0];
-
-  $('myName').textContent = name;
-
-  $('myUsername').textContent =
-    myProfile.username
-      ? '@' + myProfile.username
-      : 'Choose a username';
-
-  setAvatar($('myAvatar'), myProfile.avatar_url, name);
-
-  setAvatar($('profilePreview'), myProfile.avatar_url, name);
-
-      }
-function openProfileEditor(){ $('profileDisplayName').value=myProfile.display_name||user.user_metadata?.display_name||''; $('profileUsername').value=myProfile.username||''; $('profileError').textContent=''; setAvatar($('profilePreview'),myProfile.avatar_url,myProfile.display_name||'V'); $('profileModal').classList.remove('hidden'); }
-$('editProfile').onclick=openProfileEditor; $('cancelProfile').onclick=()=>$('profileModal').classList.add('hidden'); $('profileModal').addEventListener('click',e=>{if(e.target===$('profileModal'))$('profileModal').classList.add('hidden')});
-$('avatarFile').onchange=()=>{const f=$('avatarFile').files[0]; if(f){ setAvatar($('profilePreview'),URL.createObjectURL(f),$('profileDisplayName').value||'V'); }};
-$('saveProfile').onclick=async()=>{
- const display_name=$('profileDisplayName').value.trim(), username=$('profileUsername').value.trim().toLowerCase(); if(!display_name){$('profileError').textContent='Enter a display name.';return} if(!/^[a-z0-9_]{3,20}$/.test(username)){$('profileError').textContent='Username must be 3–20 characters.';return}
- $('saveProfile').disabled=true; $('profileError').textContent='Saving…';
- try{ let avatar_url=myProfile.avatar_url; const file=$('avatarFile').files[0]; if(file){ if(file.size>5*1024*1024) throw Error('Choose an image smaller than 5 MB.'); const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg'; const path=user.id+'/'+Date.now()+'.'+ext; const {error:upErr}=await client.storage.from('avatars').upload(path,file,{upsert:true,contentType:file.type}); if(upErr) throw upErr; const {data:pub}=client.storage.from('avatars').getPublicUrl(path); avatar_url=pub.publicUrl; }
-  const {data,error}=await client.from('profiles').update({display_name,username,avatar_url}).eq('id',user.id).select('id,display_name,username,avatar_url').single(); if(error) throw error; myProfile=data; profilesCache[user.id]=data; await client.auth.updateUser({data:{display_name}}); $('profileModal').classList.add('hidden'); await loadMyProfile(); await loadContacts(); }catch(e){$('profileError').textContent=e.message}finally{$('saveProfile').disabled=false}
-};
-async function enterApp(){ if(!user) return; $('auth').classList.add('hidden'); $('app').classList.remove('hidden'); await loadMyProfile(); await loadContacts(); startPresence(); startInboxUpdates(); }
-function startInboxUpdates(){ if(inboxChannel) client.removeChannel(inboxChannel); inboxChannel=client.channel('vybex-inbox-'+user.id).on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},async()=>{ await loadContacts(); }).subscribe(); }
-function startPresence(){ if(presenceChannel) client.removeChannel(presenceChannel); presenceChannel=client.channel('vybex-presence').on('presence',{event:'sync'},()=>{ const st=presenceChannel.presenceState(); onlineUsers=new Set(Object.values(st).flat().map(p=>p.user_id)); renderContacts(); updateFriendStatus(); }).subscribe(async s=>{ if(s==='SUBSCRIBED') await presenceChannel.track({user_id:user.id}); }); }
-function updateFriendStatus(){ if(!currentConversation) return; if(currentConversation.isGroup){ $('friendStatus').textContent=currentConversation.memberCount+' members'; } else { $('friendStatus').textContent = onlineUsers.has(currentConversation.id) ? 'Online' : 'Offline'; } }
-async function loadContacts(){
- const mine=await client.from('conversation_members').select('conversation_id').eq('user_id',user.id); if(mine.error){ $('contacts').innerHTML='<p class="muted" style="padding:0 20px;font-size:13px">Could not load chats.</p>'; return; }
- let ids=[...new Set((mine.data||[]).map(x=>x.conversation_id).filter(Boolean))]; if(!ids.length){ contacts=[]; renderContacts(); return; }
- const deletedResult=await client.from('deleted_chats').select('conversation_id,deleted_at').eq('user_id',user.id); const deletedList=deletedResult.error?[]:(deletedResult.data||[]); const hidden=new Set();
- for(const item of deletedList){ const newer=await client.from('messages').select('id').eq('conversation_id',item.conversation_id).neq('sender_id',user.id).gt('created_at',item.deleted_at).limit(1); if(newer.error){ hidden.add(item.conversation_id); continue; } if(newer.data&&newer.data.length){ await client.from('deleted_chats').delete().eq('user_id',user.id).eq('conversation_id',item.conversation_id); } else hidden.add(item.conversation_id); }
- ids=ids.filter(id=>!hidden.has(id)); if(!ids.length){ contacts=[]; renderContacts(); return; }
- const members=await client.from('conversation_members').select('conversation_id,user_id').in('conversation_id',ids); if(members.error) return;
- const otherIds=[...new Set((members.data||[]).filter(m=>m.user_id!==user.id).map(m=>m.user_id))];
- let profilesMap={}; if(otherIds.length){ const profs=await client.from('profiles').select('id,display_name,username,avatar_url').in('id',otherIds); (profs.data||[]).forEach(p=>{profilesMap[p.id]=p; profilesCache[p.id]=p;}); }
- let groupsMap={}; try{ const g=await client
-  .from('groups')
-  .select('id,name')
-  .in('id',ids);
-
-if(g.error) {
-  console.error('Could not load group names:', g.error);
-} else {
-  (g.data || []).forEach(x => {
-    groupsMap[x.id] = x.name;
-  });
-  } (g.data||[]).forEach(x=>groupsMap[x.id]=x.name); }catch(_){}
- const lastMsgs=await client.from('messages').select('conversation_id,body,created_at').in('conversation_id',ids).order('created_at',{ascending:false}); const lastByConvo={}; (lastMsgs.data||[]).forEach(m=>{ if(!lastByConvo[m.conversation_id]) lastByConvo[m.conversation_id]=m; });
- contacts=ids.map(convoId=>{
-  const allMembers=(members.data||[]).filter(m=>m.conversation_id===convoId);
-  const isGroup = !!groupsMap[convoId] || allMembers.length > 2;
-  if(isGroup){ return {conversation:convoId,id:convoId,display_name:groupsMap[convoId]||'Group Chat',username:'',avatar_url:'',last:lastByConvo[convoId]?.body||'',last_at:lastByConvo[convoId]?.created_at||'',isGroup:true,memberCount:allMembers.length,memberIds:allMembers.map(m=>m.user_id)}; }
-  const other=allMembers.find(m=>m.user_id!==user.id); const p=other?profilesMap[other.user_id]:null;
+  const other=allMembers.find(m=>m.user_id!==user.id),p=other?profilesMap[other.user_id]:null;
   return {conversation:convoId,id:p?.id||other?.user_id,display_name:p?.display_name||'VYBEX User',username:p?.username||'',avatar_url:p?.avatar_url||'',last:lastByConvo[convoId]?.body||'',last_at:lastByConvo[convoId]?.created_at||'',isGroup:false,memberCount:allMembers.length,memberIds:allMembers.map(m=>m.user_id)};
  });
- contacts.sort((a,b)=>(b.last_at||'').localeCompare(a.last_at||'')); renderContacts();
+ contacts.sort((a,b)=>(b.last_at||'').localeCompare(a.last_at||''));
+ renderContacts();
 }
+
 function renderContacts(){
- const q=($('search').value||'').toLowerCase(); const list=contacts.filter(c=>(c.display_name+' '+c.username).toLowerCase().includes(q));
- if(!list.length){ $('contacts').innerHTML='<p class="muted" style="padding:0 20px;font-size:13px">No chats yet. Tap + or 👥 to start one.</p>'; return; }
- $('contacts').innerHTML=list.map(c=>`<div class="contact ${currentConversation&&currentConversation.conversation===c.conversation?'active':''}" data-id="${c.conversation}"><div class="avatar">${c.isGroup?'👥':(c.avatar_url?`<img src="${escapeHtml(c.avatar_url)}">`:escapeHtml((c.display_name||'V').slice(0,1).toUpperCase()))}</div><div class="contact-info"><div class="contact-name">${escapeHtml(c.display_name)} ${c.isGroup?'<span class="group-badge">GROUP</span>':(c.username?`<span class="muted" style="font-weight:400">@${escapeHtml(c.username)}</span>`:'')}</div><div class="preview">${escapeHtml(c.last||'')}</div></div><span style="width:8px;height:8px;border-radius:50%;background:${!c.isGroup&&onlineUsers.has(c.id)?'#35d49a':'transparent'};flex-shrink:0"></span></div>`).join('');
- [...document.querySelectorAll('.contact')].forEach(el=>{ el.onclick=()=>{ const chat=contacts.find(x=>x.conversation===el.dataset.id); if(chat) openChat(chat); }; });
+ const q=($('search').value||'').toLowerCase();
+ const list=contacts.filter(c=>(c.display_name+' '+c.username).toLowerCase().includes(q));
+ if(!list.length){$('contacts').innerHTML='<p class="muted" style="padding:0 20px;font-size:13px">No chats yet. Tap + or 👥 to start one.</p>';return;}
+ $('contacts').innerHTML=list.map(c=>`<div class="contact ${currentConversation?.conversation===c.conversation?'active':''}" data-id="${c.conversation}">
+  <div class="avatar">${c.isGroup?'👥':(c.avatar_url?`<img src="${escapeHtml(c.avatar_url)}" alt="">`:escapeHtml((c.display_name||'V').slice(0,1).toUpperCase()))}</div>
+  <div class="contact-info"><div class="contact-name">${escapeHtml(c.display_name)} ${c.isGroup?'<span class="group-badge">GROUP</span>':(c.username?`<span class="muted" style="font-weight:400">@${escapeHtml(c.username)}</span>`:'')}</div><div class="preview">${escapeHtml(c.last||'')}</div></div>
+  <span style="width:8px;height:8px;border-radius:50%;background:${!c.isGroup&&onlineUsers.has(c.id)?'#35d49a':'transparent'};flex-shrink:0"></span></div>`).join('');
+ document.querySelectorAll('.contact').forEach(el=>{el.onclick=()=>{const chat=contacts.find(x=>x.conversation===el.dataset.id);if(chat)openChat(chat);};});
 }
+
+function updateFriendStatus(){
+ if(!currentConversation)return;
+ $('friendStatus').textContent=currentConversation.isGroup?`${currentConversation.memberCount} members`:(onlineUsers.has(currentConversation.id)?'Online':'Offline');
+}
+async function enterApp(){
+ if(!user)return;
+ $('auth').classList.add('hidden');$('app').classList.remove('hidden');
+ try{await loadMyProfile();await loadContacts();startPresence();startInboxUpdates();}
+ catch(err){console.error(err);alert('VYBEX could not load your profile: '+err.message);}
+}
+function startInboxUpdates(){
+ if(inboxChannel)client.removeChannel(inboxChannel);
+ inboxChannel=client.channel('vybex-inbox-'+user.id).on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},async()=>{await loadContacts();}).subscribe();
+}
+function startPresence(){
+ if(presenceChannel)client.removeChannel(presenceChannel);
+ presenceChannel=client.channel('vybex-presence').on('presence',{event:'sync'},()=>{
+  const state=presenceChannel.presenceState();onlineUsers=new Set(Object.values(state).flat().map(p=>p.user_id));renderContacts();updateFriendStatus();
+ }).subscribe(async status=>{if(status==='SUBSCRIBED')await presenceChannel.track({user_id:user.id});});
+}
+
 async function openChat(chat){
- currentConversation=chat; $('app').classList.add('chat-open'); $('friendName').textContent=chat.display_name; updateFriendStatus();
- if(chat.isGroup){ $('friendAvatar').textContent='👥'; } else { setAvatar($('friendAvatar'),chat.avatar_url,chat.display_name); }
- $('deleteChatBtn').style.display='block'; $('messageInput').disabled=false; $('messageForm').querySelector('button').disabled=false;
- document.querySelectorAll('.contact').forEach(el=>el.classList.toggle('active',el.dataset.id===chat.conversation)); await loadMessages();
- if(channel) await client.removeChannel(channel);
- channel=client.channel('vybex-chat-'+chat.conversation).on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:'conversation_id=eq.'+chat.conversation},payload=>{ if(payload.new.sender_id!==user.id) appendMessage(payload.new); loadContacts(); }).on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages',filter:'conversation_id=eq.'+chat.conversation},payload=>{ refreshMessage(payload.new); }).on('postgres_changes',{event:'DELETE',schema:'public',table:'messages'},payload=>{ if(payload.old&&payload.old.id) removeMessage(payload.old.id); }).subscribe();
+ currentConversation=chat;$('app').classList.add('chat-open');$('friendName').textContent=chat.display_name;updateFriendStatus();
+ if(chat.isGroup)$('friendAvatar').textContent='👥';else setAvatar($('friendAvatar'),chat.avatar_url,chat.display_name);
+ $('deleteChatBtn').style.display='block';$('messageInput').disabled=false;$('messageForm').querySelector('button').disabled=false;
+ renderContacts();await loadMessages();
+ if(channel)await client.removeChannel(channel);
+ channel=client.channel('vybex-chat-'+chat.conversation)
+  .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:'conversation_id=eq.'+chat.conversation},payload=>{if(payload.new.sender_id!==user.id)appendMessage(payload.new);loadContacts();})
+  .on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages',filter:'conversation_id=eq.'+chat.conversation},payload=>refreshMessage(payload.new))
+  .on('postgres_changes',{event:'DELETE',schema:'public',table:'messages'},payload=>{if(payload.old?.id)removeMessage(payload.old.id);})
+  .subscribe();
 }
 async function loadMessages(){
- if(!currentConversation) return; $('messages').innerHTML='<p class="muted" style="text-align:center">Loading…</p>';
- const {data,error}=await client.from('messages').select('*').eq('conversation_id',currentConversation.conversation).order('created_at',{ascending:true}).limit(200); if(error){ $('messages').innerHTML='<p class="muted" style="text-align:center">Could not load messages.</p>'; return; }
- $('messages').innerHTML=''; if(!data.length) $('messages').innerHTML='<div class="empty"><p>Say hi to start the conversation.</p></div>'; data.forEach(m=>appendMessage(m)); $('messages').scrollTop=$('messages').scrollHeight;
+ if(!currentConversation)return;
+ $('messages').innerHTML='<p class="muted" style="text-align:center">Loading…</p>';
+ const {data,error}=await client.from('messages').select('*').eq('conversation_id',currentConversation.conversation).order('created_at',{ascending:true}).limit(200);
+ if(error){$('messages').innerHTML='<p class="muted" style="text-align:center">Could not load messages.</p>';console.error(error);return;}
+ $('messages').innerHTML='';if(!data?.length)$('messages').innerHTML='<div class="empty"><p>Say hi to start the conversation.</p></div>';
+ (data||[]).forEach(m=>appendMessage(m));$('messages').scrollTop=$('messages').scrollHeight;
 }
-function receiptText(m){ if(!m) return ''; if(m.read_at) return 'Seen'; if(m.delivered_at) return 'Delivered'; return 'Sent'; }
+function receiptText(m){if(!m)return'';if(m.read_at)return'Seen';if(m.delivered_at)return'Delivered';return'Sent';}
 function appendMessage(m){
- const empty=document.querySelector('#messages .empty'); if(empty) empty.remove(); if(document.querySelector(`[data-message-id="${m.id}"]`)) return; if(m.deleted_for && m.deleted_for.includes(user.id)) return;
- const isMe=m.sender_id===user.id; const div=document.createElement('div'); div.className='msg '+(isMe?'out':'in'); div.dataset.messageId=m.id; const time=new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); const isDeleted=m.is_deleted;
- const senderName = currentConversation?.isGroup && !isMe ? (profilesCache[m.sender_id]?.display_name || 'Member') : '';
- div.innerHTML=`${senderName?`<div class="sender-name">${escapeHtml(senderName)}</div>`:''}<div class="bubble ${isDeleted?'deleted':''}">${isDeleted ? '🚫 This message was deleted' : escapeHtml(m.body)}</div><div class="stamp">${time}${isMe && !isDeleted?' · '+receiptText(m):''}${!isDeleted && m.updated_at&&m.updated_at!==m.created_at?'<span class="edited-label">(edited)</span>':''}</div>`;
- const bubble=div.querySelector('.bubble'); bubble.addEventListener('click',e=>{ showMessageMenu(e,m); }); let pressT; bubble.addEventListener('touchstart',ev=>{ pressT=setTimeout(()=>{ showMessageMenu({clientX:ev.touches[0].clientX, clientY:ev.touches[0].clientY, stopPropagation:()=>{}}, m) },500); },{passive:true}); bubble.addEventListener('touchend',()=>clearTimeout(pressT)); bubble.addEventListener('touchmove',()=>clearTimeout(pressT));
- $('messages').appendChild(div); $('messages').scrollTop=$('messages').scrollHeight;
+ if(!m)return;
+ const empty=document.querySelector('#messages .empty');if(empty)empty.remove();
+ if(document.querySelector(`[data-message-id="${m.id}"]`))return;
+ if(m.deleted_for&&m.deleted_for.includes(user.id))return;
+ const isMe=m.sender_id===user.id,div=document.createElement('div');div.className='msg '+(isMe?'out':'in');div.dataset.messageId=m.id;
+ const time=new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),isDeleted=m.is_deleted;
+ const senderName=currentConversation?.isGroup&&!isMe?(profilesCache[m.sender_id]?.display_name||'Member'):'';
+ div.innerHTML=`${senderName?`<div class="sender-name">${escapeHtml(senderName)}</div>`:''}<div class="bubble ${isDeleted?'deleted':''}">${isDeleted?'🚫 This message was deleted':escapeHtml(m.body)}</div><div class="stamp">${time}${isMe&&!isDeleted?' · '+receiptText(m):''}${!isDeleted&&m.updated_at&&m.updated_at!==m.created_at?'<span class="edited-label">(edited)</span>':''}</div>`;
+ const bubble=div.querySelector('.bubble');bubble.addEventListener('click',e=>showMessageMenu(e,m));
+ let pressT;bubble.addEventListener('touchstart',ev=>{pressT=setTimeout(()=>showMessageMenu({clientX:ev.touches[0].clientX,clientY:ev.touches[0].clientY,stopPropagation:()=>{}},m),500);},{passive:true});
+ bubble.addEventListener('touchend',()=>clearTimeout(pressT));bubble.addEventListener('touchmove',()=>clearTimeout(pressT));
+ $('messages').appendChild(div);$('messages').scrollTop=$('messages').scrollHeight;
 }
-function refreshMessage(m){ if(m.deleted_for && m.deleted_for.includes(user.id)){ removeMessage(m.id); return; } const row=document.querySelector(`[data-message-id="${m.id}"]`); if(!row){ appendMessage(m); return; } const bubble=row.querySelector('.bubble'); if(bubble){ if(m.is_deleted){ bubble.textContent='🚫 This message was deleted'; bubble.classList.add('deleted'); } else { bubble.textContent=m.body; bubble.classList.remove('deleted'); } } const stamp=row.querySelector('.stamp'); if(stamp){ const time=new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); stamp.innerHTML=time+(m.sender_id===user.id && !m.is_deleted?' · '+receiptText(m):'')+(!m.is_deleted && m.updated_at&&m.updated_at!==m.created_at?'<span class="edited-label">(edited)</span>':''); } }
-function removeMessage(id){ const row=document.querySelector(`[data-message-id="${id}"]`); if(row) row.remove(); }
+function refreshMessage(m){
+ if(m.deleted_for&&m.deleted_for.includes(user.id)){removeMessage(m.id);return;}
+ const row=document.querySelector(`[data-message-id="${m.id}"]`);if(!row){appendMessage(m);return;}
+ const bubble=row.querySelector('.bubble');
+ if(bubble){if(m.is_deleted){bubble.textContent='🚫 This message was deleted';bubble.classList.add('deleted');}else{bubble.textContent=m.body;bubble.classList.remove('deleted');}}
+ const stamp=row.querySelector('.stamp');
+ if(stamp){const time=new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});stamp.innerHTML=time+(m.sender_id===user.id&&!m.is_deleted?' · '+receiptText(m):'')+(!m.is_deleted&&m.updated_at&&m.updated_at!==m.created_at?'<span class="edited-label">(edited)</span>':'');}
+}
+function removeMessage(id){const row=document.querySelector(`[data-message-id="${id}"]`);if(row)row.remove();}
 function showMessageMenu(e,m){
- e.stopPropagation(); const menu=$('messageMenu'); menu.classList.remove('hidden'); menu.style.left=Math.min(e.clientX,window.innerWidth-200)+'px'; menu.style.top=Math.min(e.clientY,window.innerHeight-200)+'px'; const row=document.querySelector(`[data-message-id="${m.id}"]`); const isMe=m.sender_id===user.id || (row && row.classList.contains('out')); menu.innerHTML='';
- const copy=document.createElement('button'); copy.textContent='📋 Copy'; copy.onclick=async()=>{ menu.classList.add('hidden'); if(m.is_deleted) return; try{ await navigator.clipboard.writeText(m.body); }catch(_){} }; menu.appendChild(copy);
- if(isMe && !m.is_deleted){ const edit=document.createElement('button'); edit.textContent='✏️ Edit'; edit.onclick=async()=>{ menu.classList.add('hidden'); const next=await showModal('Edit message','Edit your message','Save'); if(next===null) return; const body=next.trim(); if(!body||body===m.body) return; const {data,error}=await client.rpc('edit_own_message',{p_message_id:m.id,p_body:body}); if(error){alert('Could not edit: '+error.message);return} const u=Array.isArray(data)?data[0]:data; if(u) refreshMessage(u); }; menu.appendChild(edit); }
- const delMe=document.createElement('button'); delMe.textContent='🗑 Delete for me'; delMe.onclick=async()=>{ menu.classList.add('hidden'); if(!confirm('Delete this message for you?')) return; const {error}=await client.rpc('delete_message',{p_message_id:m.id,p_for_everyone:false}); if(error){alert('Could not delete: '+error.message);return} removeMessage(m.id); }; menu.appendChild(delMe);
- if(isMe && !m.is_deleted){ const delAll=document.createElement('button'); delAll.className='danger'; delAll.textContent='🗑 Delete for everyone'; delAll.onclick=async()=>{ menu.classList.add('hidden'); if(!confirm('Delete this message for everyone?')) return; const {error}=await client.rpc('delete_message',{p_message_id:m.id,p_for_everyone:true}); if(error){alert('Could not delete: '+error.message);return} refreshMessage({...m, is_deleted:true, body:'This message was deleted'}); }; menu.appendChild(delAll); }
- document.addEventListener('click',()=>menu.classList.add('hidden'),{once:true});
+ e.stopPropagation();const menu=$('messageMenu');menu.classList.remove('hidden');
+ menu.style.left=Math.max(5,Math.min(e.clientX,window.innerWidth-200))+'px';menu.style.top=Math.max(5,Math.min(e.clientY,window.innerHeight-210))+'px';
+ const row=document.querySelector(`[data-message-id="${m.id}"]`),isMe=m.sender_id===user.id||(row&&row.classList.contains('out'));menu.innerHTML='';
+ const copy=document.createElement('button');copy.textContent='📋 Copy';copy.onclick=async()=>{menu.classList.add('hidden');if(!m.is_deleted)try{await navigator.clipboard.writeText(m.body);}catch(_){}};menu.appendChild(copy);
+ if(isMe&&!m.is_deleted){
+  const edit=document.createElement('button');edit.textContent='✏️ Edit';edit.onclick=async()=>{menu.classList.add('hidden');const next=await showModal('Edit message','Edit your message','Save');if(next===null)return;const body=next.trim();if(!body||body===m.body)return;const {data,error}=await client.rpc('edit_own_message',{p_message_id:m.id,p_body:body});if(error){alert('Could not edit: '+error.message);return;}const updated=Array.isArray(data)?data[0]:data;if(updated)refreshMessage(updated);else await loadMessages();};menu.appendChild(edit);
+ }
+ const delMe=document.createElement('button');delMe.textContent='🗑 Delete for me';delMe.onclick=async()=>{menu.classList.add('hidden');if(!confirm('Delete this message for you?'))return;const {error}=await client.rpc('delete_message',{p_message_id:m.id,p_for_everyone:false});if(error){alert('Could not delete: '+error.message);return;}removeMessage(m.id);};menu.appendChild(delMe);
+ if(isMe&&!m.is_deleted){
+  const delAll=document.createElement('button');delAll.className='danger';delAll.textContent='🗑 Delete for everyone';delAll.onclick=async()=>{menu.classList.add('hidden');if(!confirm('Delete this message for everyone?'))return;const {error}=await client.rpc('delete_message',{p_message_id:m.id,p_for_everyone:true});if(error){alert('Could not delete: '+error.message);return;}refreshMessage({...m,is_deleted:true,body:'This message was deleted'});};menu.appendChild(delAll);
+ }
+ const close=ev=>{if(!menu.contains(ev.target)){menu.classList.add('hidden');document.removeEventListener('click',close);}};
+ setTimeout(()=>document.addEventListener('click',close),0);
 }
+
 async function deleteChatForMe(){
- if(!currentConversation) return; if(!confirm(currentConversation.isGroup?'Leave this group? You will stop receiving its messages.':'Delete this chat for you? The other person will keep their messages.')) return; const chatId=currentConversation.conversation;
- await client.from('deleted_chats').delete().eq('user_id',user.id).eq('conversation_id',chatId); const {error}=await client.from('deleted_chats').insert({user_id:user.id,conversation_id:chatId,deleted_at:new Date().toISOString()}); if(error){ alert('Could not delete chat: '+error.message); return; }
- if(channel){ await client.removeChannel(channel); channel=null; } currentConversation=null; $('messages').innerHTML='<div class="empty"><div class="logo" style="margin:0 auto 14px">V</div><strong>Welcome to VYBEX</strong><p>Choose a conversation or start a new chat.</p></div>'; $('friendName').textContent='Choose a conversation'; $('friendStatus').textContent='Your private messages'; $('friendAvatar').textContent='V'; $('deleteChatBtn').style.display='none'; $('messageInput').disabled=true; $('messageForm').querySelector('button').disabled=true; $('app').classList.remove('chat-open'); await loadContacts();
+ if(!currentConversation)return;
+ const chat=currentConversation;
+ if(!confirm(chat.isGroup?'Leave this group? You will stop receiving its messages.':'Delete this chat for you? The other person will keep their messages.'))return;
+ const chatId=chat.conversation;
+ await client.from('deleted_chats').delete().eq('user_id',user.id).eq('conversation_id',chatId);
+ const {error}=await client.from('deleted_chats').insert({user_id:user.id,conversation_id:chatId,deleted_at:new Date().toISOString()});
+ if(error){alert('Could not delete chat: '+error.message);return;}
+ if(channel){await client.removeChannel(channel);channel=null;}
+ currentConversation=null;$('messages').innerHTML='<div class="empty"><div class="logo" style="margin:0 auto 14px">V</div><strong>Welcome to VYBEX</strong><p>Choose a conversation or start a new chat.</p></div>';
+ $('friendName').textContent='Choose a conversation';$('friendStatus').textContent='Your private messages';$('friendAvatar').textContent='V';$('deleteChatBtn').style.display='none';$('messageInput').disabled=true;$('messageForm').querySelector('button').disabled=true;$('app').classList.remove('chat-open');await loadContacts();
 }
 $('deleteChatBtn').onclick=deleteChatForMe;
-$('messageForm').onsubmit=async e=>{ e.preventDefault(); const body=$('messageInput').value.trim(); if(!body||!currentConversation) return; $('messageInput').value=''; const {data,error}=await client.from('messages').insert({conversation_id:currentConversation.conversation,sender_id:user.id,body}).select().single(); if(error){ $('messageInput').value=body; alert('Message not sent: '+error.message); return; } appendMessage(data); await loadContacts(); };
-$('search').oninput=renderContacts; $('back').onclick=()=>$('app').classList.remove('chat-open');
-// --- 1-to-1 CHAT (unchanged) ---
+$('messageForm').onsubmit=async e=>{
+ e.preventDefault();const body=$('messageInput').value.trim();if(!body||!currentConversation)return;$('messageInput').value='';
+ const {data,error}=await client.from('messages').insert({conversation_id:currentConversation.conversation,sender_id:user.id,body}).select().single();
+ if(error){$('messageInput').value=body;alert('Message not sent: '+error.message);return;}
+ appendMessage(data);await loadContacts();
+};
+$('search').oninput=renderContacts;
+$('back').onclick=()=>$('app').classList.remove('chat-open');
+
 $('newChat').onclick=async()=>{
- const username=await showModal('New Chat',"Enter friend's username (without @)",'Create Chat'); if(!username) return; $('modalError').textContent='Creating…';
- try{ const {data:matches,error}=await client.rpc('find_profile_by_username',{p_username:username.replace(/^@/,'').toLowerCase()}); if(error) throw error; const profile=Array.isArray(matches)?matches[0]:matches; if(!profile){ $('modalError').textContent='Friend not found: @'+username; $('genericModal').classList.remove('hidden'); return; } if(profile.id===user.id){ $('modalError').textContent='You cannot chat with yourself.'; $('genericModal').classList.remove('hidden'); return; } const {data:chatId,error:chatError}=await client.rpc('create_direct_chat',{friend_id:profile.id}); if(chatError) throw chatError; $('genericModal').classList.add('hidden'); await loadContacts(); const chat=contacts.find(c=>c.conversation===chatId); if(chat) openChat(chat); else alert('Chat created. Refresh.'); }catch(err){ $('modalError').textContent=err.message; $('genericModal').classList.remove('hidden'); }
+ const username=await showModal('New Chat',"Enter friend's username (without @)",'Create Chat');if(!username)return;
+ $('modalError').textContent='Creating…';
+ try{
+  const {data:matches,error}=await client.rpc('find_profile_by_username',{p_username:username.replace(/^@/,'').toLowerCase()});if(error)throw error;
+  const profile=Array.isArray(matches)?matches[0]:matches;
+  if(!profile){$('modalError').textContent='Friend not found: @'+username;$('genericModal').classList.remove('hidden');return;}
+  if(profile.id===user.id){$('modalError').textContent='You cannot chat with yourself.';$('genericModal').classList.remove('hidden');return;}
+  const {data:chatId,error:chatError}=await client.rpc('create_direct_chat',{friend_id:profile.id});if(chatError)throw chatError;
+  $('genericModal').classList.add('hidden');await loadContacts();const chat=contacts.find(c=>c.conversation===chatId);if(chat)openChat(chat);else alert('Chat created, but it was not returned in your chat list. Check conversation membership permissions.');
+ }catch(err){$('modalError').textContent=err.message;$('genericModal').classList.remove('hidden');}
 };
-// --- GROUP CHAT (new) ---
-$('newGroup').onclick=()=>{ $('groupName').value=''; $('groupMembers').value=''; $('groupError').textContent=''; $('groupModal').classList.remove('hidden'); setTimeout(()=>$('groupName').focus(),50); };
+
+$('newGroup').onclick=()=>{$('groupName').value='';$('groupMembers').value='';showError('groupError','');$('groupModal').classList.remove('hidden');setTimeout(()=>$('groupName').focus(),50);};
 $('groupCancel').onclick=()=>$('groupModal').classList.add('hidden');
-$('groupModal').addEventListener('click',e=>{ if(e.target===$('groupModal')) $('groupModal').classList.add('hidden'); });
+$('groupModal').addEventListener('click',e=>{if(e.target===$('groupModal'))$('groupModal').classList.add('hidden');});
 $('groupGo').onclick=async()=>{
-  const name=$('groupName').value.trim();
-  const raw=$('groupMembers').value.trim();
-  if(!name){ $('groupError').textContent='Enter a group name.'; return; }
-  if(name.length>60){ $('groupError').textContent='Group name must be 60 characters or fewer.'; return; }
-  const usernames=[...new Set(raw.split(',').map(s=>s.trim().replace(/^@/,'' ).toLowerCase()).filter(Boolean))];
-  if(usernames.length<2){ $('groupError').textContent='Add at least 2 people, comma separated.'; return; }
-  $('groupGo').disabled=true; $('groupError').textContent='Creating group…';
-  try{
-    const memberIds=[];
-    for(const uname of usernames){
-      const {data,error}=await client.rpc('find_profile_by_username',{p_username:uname});
-      if(error) throw error;
-      const p=Array.isArray(data)?data[0]:data;
-      if(!p) throw new Error('Not found: @'+uname);
-      if(p.id===user.id) throw new Error('You are already in the group, don\'t add yourself.');
-      if(!memberIds.includes(p.id)) memberIds.push(p.id);
-    }
-    // Create the conversation, group record, and all memberships atomically
-    // through the protected Supabase RPC. The RPC returns the new conversation ID.
-    const {data:groupId,error:createError}=await client.rpc('create_group',{
-      p_name:name,
-      p_member_ids:memberIds
-    });
-    if(createError) throw createError;
-    if(!groupId) throw new Error('The group was not created. Please try again.');
-    $('groupModal').classList.add('hidden');
-    await loadContacts();
-    const chat=contacts.find(c=>c.conversation===groupId);
-    if(chat) openChat(chat);
-  }catch(err){ $('groupError').textContent=err.message; }
-  finally{ $('groupGo').disabled=false; }
+ const name=$('groupName').value.trim(),raw=$('groupMembers').value.trim();
+ if(!name){showError('groupError','Enter a group name.');return;}
+ if(name.length>60){showError('groupError','Group name must be 60 characters or fewer.');return;}
+ const usernames=[...new Set(raw.split(',').map(s=>s.trim().replace(/^@/,'').toLowerCase()).filter(Boolean))];
+ if(usernames.length<2){showError('groupError','Add at least 2 people, comma separated.');return;}
+ $('groupGo').disabled=true;showError('groupError','Creating group…');
+ try{
+  const memberIds=[];
+  for(const uname of usernames){
+   const {data,error}=await client.rpc('find_profile_by_username',{p_username:uname});if(error)throw error;
+   const p=Array.isArray(data)?data[0]:data;if(!p)throw new Error('Not found: @'+uname);
+   if(p.id===user.id)throw new Error('You are already in the group. Do not add your own username.');
+   if(!memberIds.includes(p.id))memberIds.push(p.id);
+  }
+  const {data:groupId,error:createError}=await client.rpc('create_group',{p_name:name,p_member_ids:memberIds});
+  if(createError)throw createError;if(!groupId)throw new Error('The group was not created. Please try again.');
+  $('groupModal').classList.add('hidden');await loadContacts();
+  const chat=contacts.find(c=>c.conversation===groupId);
+  if(chat)openChat(chat);else alert('Group created, but it was not returned in your chat list. Check that create_group adds you to conversation_members and sets conversations.title.');
+ }catch(err){showError('groupError',err.message);}
+ finally{$('groupGo').disabled=false;}
 };
-$('logout').onclick=async()=>{ if(channel) client.removeChannel(channel); if(presenceChannel) client.removeChannel(presenceChannel); if(inboxChannel) client.removeChannel(inboxChannel); await client.auth.signOut(); channel=null; presenceChannel=null; inboxChannel=null; onlineUsers.clear(); user=null; currentConversation=null; $('app').classList.add('hidden'); $('auth').classList.remove('hidden'); };
-client.auth.getSession().then(({data})=>{ if(data.session){ user=data.session.user; enterApp(); } });
-client.auth.onAuthStateChange((_e,session)=>{ if(session&&!user){ user=session.user; enterApp(); } });
+
+function openProfileEditor(){
+ $('profileDisplayName').value=myProfile.display_name||user?.user_metadata?.display_name||'';
+ $('profileUsername').value=myProfile.username||'';showError('profileError','');setAvatar($('profilePreview'),myProfile.avatar_url,myProfile.display_name||'V');$('profileModal').classList.remove('hidden');
+}
+$('editProfile').onclick=openProfileEditor;
+$('cancelProfile').onclick=()=>$('profileModal').classList.add('hidden');
+$('profileModal').addEventListener('click',e=>{if(e.target===$('profileModal'))$('profileModal').classList.add('hidden');});
+$('avatarFile').onchange=()=>{const file=$('avatarFile').files[0];if(file)setAvatar($('profilePreview'),URL.createObjectURL(file),$('profileDisplayName').value||'V');};
+$('saveProfile').onclick=async()=>{
+ const display_name=$('profileDisplayName').value.trim(),username=$('profileUsername').value.trim().toLowerCase();
+ if(!display_name){showError('profileError','Enter a display name.');return;}
+ if(!/^[a-z0-9_]{3,20}$/.test(username)){showError('profileError','Username must be 3–20 characters.');return;}
+ $('saveProfile').disabled=true;showError('profileError','Saving…');
+ try{
+  let avatar_url=myProfile.avatar_url;const file=$('avatarFile').files[0];
+  if(file){
+   if(file.size>5*1024*1024)throw Error('Choose an image smaller than 5 MB.');
+   const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+   const path=user.id+'/'+Date.now()+'.'+ext;
+   const {error:upErr}=await client.storage.from('avatars').upload(path,file,{upsert:true,contentType:file.type});if(upErr)throw upErr;
+   const {data:pub}=client.storage.from('avatars').getPublicUrl(path);avatar_url=pub.publicUrl;
+  }
+  const {data,error}=await client.from('profiles').update({display_name,username,avatar_url}).eq('id',user.id).select('id,display_name,username,avatar_url').single();
+  if(error)throw error;myProfile=data;profilesCache[user.id]=data;
+  await client.auth.updateUser({data:{display_name}});$('profileModal').classList.add('hidden');await loadMyProfile();await loadContacts();
+ }catch(err){showError('profileError',err.message);}
+ finally{$('saveProfile').disabled=false;}
+};
+
+$('logout').onclick=async()=>{
+ if(channel)await client.removeChannel(channel);if(presenceChannel)await client.removeChannel(presenceChannel);if(inboxChannel)await client.removeChannel(inboxChannel);
+ await client.auth.signOut();channel=null;presenceChannel=null;inboxChannel=null;onlineUsers.clear();user=null;currentConversation=null;contacts=[];
+ $('app').classList.add('hidden');$('auth').classList.remove('hidden');
+};
+client.auth.getSession().then(({data})=>{if(data.session){user=data.session.user;enterApp();}});
+client.auth.onAuthStateChange((_event,session)=>{if(session&&!user){user=session.user;enterApp();}else if(!session&&user){user=null;}});
 </script>
-</body></html>
+</body>
+</html>
