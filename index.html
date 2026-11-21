@@ -23,11 +23,11 @@
 <section class="auth-wrap" id="auth">
  <div class="card">
   <div class="auth-head"><div class="brand"><span class="logo">V</span> VYBEX</div><p>CONNECT. CHAT. BELONG.</p></div>
-  <form id="authPanel" autocomplete="on">
+  <form id="authPanel" autocomplete="on" method="post" action="/login">
    <h1 id="authTitle">Welcome back</h1><p class="sub" id="authSub">Sign in to continue to VYBEX</p>
-   <div id="nameField" class="field hidden"><label>Your name</label><input id="name" maxlength="40" autocomplete="name" placeholder="Your display name"></div>
-   <div class="field"><label>Email address</label><input id="email" type="email" autocomplete="username" placeholder="you@example.com" required></div>
-   <div class="field"><label>Password</label><div class="pass-wrap"><input id="password" type="password" autocomplete="current-password" placeholder="At least 8 characters" required><button type="button" id="togglePass" class="eye-btn">👁️</button></div></div>
+   <div id="nameField" class="field hidden"><label>Your name</label><input id="name" name="name" maxlength="40" autocomplete="name" placeholder="Your display name"></div>
+   <div class="field"><label>Email address</label><input id="email" name="username" type="email" autocomplete="username" placeholder="you@example.com" required></div>
+   <div class="field"><label>Password</label><div class="pass-wrap"><input id="password" name="password" type="password" autocomplete="current-password" placeholder="At least 8 characters" required><button type="button" id="togglePass" class="eye-btn" aria-label="Show password">👁️</button></div></div>
    <p class="hint">Connect with friends. Chat. Belong. Welcome to VYBEX!</p>
    <button class="primary" id="authButton" type="submit">Sign in</button><div class="error" id="authError" role="alert"></div>
    <p class="switch"><span id="switchText">New to VYBEX?</span> <button class="link" id="switchMode" type="button">Create account</button></p>
@@ -68,314 +68,504 @@ let user=null,currentConversation=null,channel=null,presenceChannel=null,inboxCh
 let signupMode=false,contacts=[],onlineUsers=new Set();
 let myProfile={display_name:"",username:"",avatar_url:""},profilesCache={};
 
-function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
-function setAvatar(el,url,fallback){if(!el)return;if(url)el.innerHTML=`<img src="${escapeHtml(url)}" alt="">`;else el.textContent=(fallback||"V").slice(0,1).toUpperCase();}
-function showError(id,message){$(id).textContent=message||'';}
+function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+function setAvatar(el,url,fallback){if(!el)return;if(url)el.innerHTML='<img src="'+escapeHtml(url)+'" alt="">';else el.textContent=(fallback||"V").slice(0,1).toUpperCase();}
+function showError(id,msg){const el=$(id);if(el)el.textContent=msg||'';}
 
 function showModal(title,placeholder,btnText){
- return new Promise(resolve=>{
-  $('modalTitle').textContent=title;$('modalInput').placeholder=placeholder;$('modalInput').value='';showError('modalError','');$('modalGo').textContent=btnText||'Continue';$('genericModal').classList.remove('hidden');
-  setTimeout(()=>$('modalInput').focus(),50);
-  const close=value=>{$('genericModal').classList.add('hidden');$('modalGo').onclick=null;$('modalCancel').onclick=null;$('genericModal').onclick=null;resolve(value);};
-  $('modalCancel').onclick=()=>close(null);$('genericModal').onclick=e=>{if(e.target===$('genericModal'))close(null);};$('modalGo').onclick=()=>close($('modalInput').value.trim());
- });
+  return new Promise(resolve=>{
+    $('modalTitle').textContent=title;
+    $('modalInput').placeholder=placeholder;
+    $('modalInput').value='';
+    showError('modalError','');
+    $('modalGo').textContent=btnText||'Continue';
+    $('genericModal').classList.remove('hidden');
+    setTimeout(()=>$('modalInput').focus(),50);
+    const close=(val)=>{$('genericModal').classList.add('hidden');$('modalGo').onclick=null;$('modalCancel').onclick=null;$('genericModal').onclick=null;resolve(val);};
+    $('modalCancel').onclick=()=>close(null);
+    $('genericModal').onclick=(e)=>{if(e.target===$('genericModal'))close(null);};
+    $('modalGo').onclick=()=>close($('modalInput').value.trim());
+    $('modalInput').onkeydown=(e)=>{if(e.key==='Enter'){e.preventDefault();close($('modalInput').value.trim());}};
+  });
 }
+
 function authMode(signup){
- signupMode=signup;$('password').setAttribute('autocomplete',signup?'new-password':'current-password');
- $('authTitle').textContent=signup?'Create your account':'Welcome back';
- $('authSub').textContent=signup?'Join VYBEX to chat and connect':'Sign in to continue to VYBEX';
- $('authButton').textContent=signup?'Create account':'Sign in';
- $('switchMode').textContent=signup?'Sign in':'Create account';
- $('switchText').textContent=signup?'Already have an account?':'New to VYBEX?';
- $('nameField').classList.toggle('hidden',!signup);
+  signupMode=signup;
+  $('password').setAttribute('autocomplete',signup?'new-password':'current-password');
+  $('authPanel').setAttribute('action',signup?'/signup':'/login');
+  $('authTitle').textContent=signup?'Create your account':'Welcome back';
+  $('authSub').textContent=signup?'Join VYBEX to chat and connect':'Sign in to continue to VYBEX';
+  $('authButton').textContent=signup?'Create account':'Sign in';
+  $('switchMode').textContent=signup?'Sign in':'Create account';
+  $('switchText').textContent=signup?'Already have an account?':'New to VYBEX?';
+  $('nameField').classList.toggle('hidden',!signup);
 }
 authMode(false);
 $('switchMode').onclick=()=>authMode(!signupMode);
-$('togglePass').onclick=()=>{const p=$('password'),show=p.type==='password';p.type=show?'text':'password';$('togglePass').textContent=show?'🙈':'👁️';};
+$('togglePass').onclick=()=>{
+  const p=$('password'),show=p.type==='password';
+  p.type=show?'text':'password';
+  $('togglePass').textContent=show?'🙈':'👁️';
+  $('togglePass').setAttribute('aria-label',show?'Hide password':'Show password');
+};
 
-$('authPanel').addEventListener('submit',async e=>{
- e.preventDefault();const email=$('email').value.trim(),password=$('password').value,display_name=$('name').value.trim();showError('authError','');
- if(!email||!password){showError('authError','Enter email and password.');return;}
- if(signupMode&&password.length<8){showError('authError','Password must contain at least 8 characters.');return;}
- if(signupMode&&!display_name){showError('authError','Please enter your display name.');return;}
- $('authButton').disabled=true;$('authButton').textContent=signupMode?'Creating account…':'Signing in…';
- try{
-  if(signupMode){
-   const {data,error}=await client.auth.signUp({email,password,options:{data:{display_name}}});
-   if(error)throw error;
-   if(data.session){user=data.user;await enterApp();}
-   else showError('authError','Account created! Please check your email to confirm your account.');
-  }else{
-   const {data,error}=await client.auth.signInWithPassword({email,password});if(error)throw error;user=data.user;await enterApp();
-  }
- }catch(err){showError('authError',err.message);}
- finally{$('authButton').disabled=false;$('authButton').textContent=signupMode?'Create account':'Sign in';}
+$('authPanel').addEventListener('submit',async(e)=>{
+  e.preventDefault();
+  const email=$('email').value.trim(),password=$('password').value,display_name=$('name').value.trim();
+  showError('authError','');
+  if(!email||!password){showError('authError','Enter email and password.');return;}
+  if(signupMode&&password.length<8){showError('authError','Password must contain at least 8 characters.');return;}
+  if(signupMode&&!display_name){showError('authError','Please enter your display name.');return;}
+  $('authButton').disabled=true;
+  $('authButton').textContent=signupMode?'Creating account…':'Signing in…';
+  try{
+    if(signupMode){
+      const {data,error}=await client.auth.signUp({email,password,options:{data:{display_name}}});
+      if(error)throw error;
+      if(data.session){user=data.user;await enterApp();}
+      else showError('authError','Account created! Please check your email to confirm your account.');
+    }else{
+      const {data,error}=await client.auth.signInWithPassword({email,password});
+      if(error)throw error;
+      user=data.user;await enterApp();
+    }
+  }catch(err){showError('authError',err.message);}
+  finally{$('authButton').disabled=false;$('authButton').textContent=signupMode?'Create account':'Sign in';}
 });
 
 async function loadMyProfile(){
- if(!user)return;
- const {data,error}=await client.from('profiles').select('id,display_name,username,avatar_url').eq('id',user.id).maybeSingle();
- if(error){console.error('Profile load error:',error);throw error;}
- if(data){myProfile={...myProfile,...data};}
- else{
-  const display_name=user.user_metadata?.display_name||user.email?.split('@')[0]||'VYBEX User';
-  const {data:created,error:createError}=await client.from('profiles').insert({id:user.id,display_name,username:null,avatar_url:null}).select('id,display_name,username,avatar_url').single();
-  if(createError)throw createError;
-  myProfile={...myProfile,...created};
- }
- profilesCache[user.id]=myProfile;
- const name=myProfile.display_name||user.user_metadata?.display_name||user.email?.split('@')[0]||'You';
- $('myName').textContent=name;$('myUsername').textContent=myProfile.username?'@'+myProfile.username:'Choose a username';
- setAvatar($('myAvatar'),myProfile.avatar_url,name);setAvatar($('profilePreview'),myProfile.avatar_url,name);
+  if(!user)return;
+  const {data,error}=await client.from('profiles').select('id,display_name,username,avatar_url').eq('id',user.id).maybeSingle();
+  if(error)throw error;
+  if(data){myProfile={...myProfile,...data};}
+  else{
+    const display_name=user.user_metadata?.display_name||user.email?.split('@')[0]||'VYBEX User';
+    const {data:created,[STRIPPED] client.from('profiles').insert({id:user.id,display_name,username:null,avatar_url:null}).select('id,display_name,username,avatar_url').single();
+    if(createError)throw createError;
+    myProfile={...myProfile,...created};
+  }
+  profilesCache[user.id]=myProfile;
+  const name=myProfile.display_name||user.user_metadata?.display_name||user.email?.split('@')[0]||'You';
+  $('myName').textContent=name;
+  $('myUsername').textContent=myProfile.username?'@'+myProfile.username:'Choose a username';
+  setAvatar($('myAvatar'),myProfile.avatar_url,name);
+  setAvatar($('profilePreview'),myProfile.avatar_url,name);
 }
 
 async function loadContacts(){
- if(!user)return;
- const mine=await client.from('conversation_members').select('conversation_id').eq('user_id',user.id);
- if(mine.error){$('contacts').innerHTML='<p class="muted" style="padding:0 20px;font-size:13px">Could not load chats.</p>';console.error(mine.error);return;}
- let ids=[...new Set((mine.data||[]).map(x=>x.conversation_id).filter(Boolean))];
- if(!ids.length){contacts=[];renderContacts();return;}
+  if(!user)return;
+  const mine=await client.from('conversation_members').select('conversation_id').eq('user_id',user.id);
+  if(mine.error){$('contacts').innerHTML='<p class="muted" style="padding:0 20px;font-size:13px">Could not load chats.</p>';console.error(mine.error);return;}
+  let ids=[...new Set((mine.data||[]).map(x=>x.conversation_id).filter(Boolean))];
+  if(!ids.length){contacts=[];renderContacts();return;}
 
- // Keep chats hidden for this user until another participant sends a new message.
- const deletedResult=await client.from('deleted_chats').select('conversation_id,deleted_at').eq('user_id',user.id);
- const deletedList=deletedResult.error?[]:(deletedResult.data||[]),hidden=new Set();
- for(const item of deletedList){
-  const newer=await client.from('messages').select('id').eq('conversation_id',item.conversation_id).neq('sender_id',user.id).gt('created_at',item.deleted_at).limit(1);
-  if(newer.error){hidden.add(item.conversation_id);continue;}
-  if(newer.data?.length){await client.from('deleted_chats').delete().eq('user_id',user.id).eq('conversation_id',item.conversation_id);}
-  else hidden.add(item.conversation_id);
- }
- ids=ids.filter(id=>!hidden.has(id));
- if(!ids.length){contacts=[];renderContacts();return;}
-
- const [membersResult,conversationsResult]=await Promise.all([
-  client.from('conversation_members').select('conversation_id,user_id').in('conversation_id',ids),
-  client.from('conversations').select('id,is_group,title').in('id',ids)
- ]);
- if(membersResult.error){console.error(membersResult.error);return;}
- if(conversationsResult.error){console.error('Could not load conversation titles:',conversationsResult.error);return;}
- const members=membersResult.data||[],conversationsMap={};
- (conversationsResult.data||[]).forEach(c=>conversationsMap[c.id]=c);
-
- // Fallback for older group records where groups.id matches the conversation id.
- const groupIds=ids.filter(id=>conversationsMap[id]?.is_group);
- let legacyGroupNames={};
- if(groupIds.length){
-  const gr=await client.from('groups').select('id,name').in('id',groupIds);
-  if(!gr.error)(gr.data||[]).forEach(g=>legacyGroupNames[g.id]=g.name);
- }
-
- const otherIds=[...new Set(members.filter(m=>m.user_id!==user.id).map(m=>m.user_id))];
- let profilesMap={};
- if(otherIds.length){
-  const profs=await client.from('profiles').select('id,display_name,username,avatar_url').in('id',otherIds);
-  if(profs.error)console.error('Could not load profiles:',profs.error);
-  (profs.data||[]).forEach(p=>{profilesMap[p.id]=p;profilesCache[p.id]=p;});
- }
- const lastMsgs=await client.from('messages').select('conversation_id,body,created_at').in('conversation_id',ids).order('created_at',{ascending:false});
- const lastByConvo={};(lastMsgs.data||[]).forEach(m=>{if(!lastByConvo[m.conversation_id])lastByConvo[m.conversation_id]=m;});
-
- contacts=ids.map(convoId=>{
-  const allMembers=members.filter(m=>m.conversation_id===convoId),conversation=conversationsMap[convoId];
-  const isGroup=conversation?.is_group===true;
-  if(isGroup){
-   const actualTitle=(conversation.title||'').trim();
-   return {conversation:convoId,id:convoId,display_name:actualTitle||legacyGroupNames[convoId]||'Group Chat',username:'',avatar_url:'',last:lastByConvo[convoId]?.body||'',last_at:lastByConvo[convoId]?.created_at||'',isGroup:true,memberCount:allMembers.length,memberIds:allMembers.map(m=>m.user_id)};
+  const deletedResult=await client.from('deleted_chats').select('conversation_id,deleted_at').eq('user_id',user.id);
+  const deletedList=deletedResult.error?[]:(deletedResult.data||[]);
+  const hidden=new Set();
+  for(const item of deletedList){
+    const newer=await client.from('messages').select('id').eq('conversation_id',item.conversation_id).neq('sender_id',user.id).gt('created_at',item.deleted_at).limit(1);
+    if(newer.error){hidden.add(item.conversation_id);continue;}
+    if(newer.data&&newer.data.length){await client.from('deleted_chats').delete().eq('user_id',user.id).eq('conversation_id',item.conversation_id);}
+    else hidden.add(item.conversation_id);
   }
-  const other=allMembers.find(m=>m.user_id!==user.id),p=other?profilesMap[other.user_id]:null;
-  return {conversation:convoId,id:p?.id||other?.user_id,display_name:p?.display_name||'VYBEX User',username:p?.username||'',avatar_url:p?.avatar_url||'',last:lastByConvo[convoId]?.body||'',last_at:lastByConvo[convoId]?.created_at||'',isGroup:false,memberCount:allMembers.length,memberIds:allMembers.map(m=>m.user_id)};
- });
- contacts.sort((a,b)=>(b.last_at||'').localeCompare(a.last_at||''));
- renderContacts();
+  ids=ids.filter(id=>!hidden.has(id));
+  if(!ids.length){contacts=[];renderContacts();return;}
+
+  const membersResult=await client.from('conversation_members').select('conversation_id,user_id').in('conversation_id',ids);
+  if(membersResult.error){console.error(membersResult.error);return;}
+  const members=membersResult.data||[];
+
+  // Conversations table is optional - if it fails, we fall back to member-count logic
+  let conversationsMap={};
+  try{
+    const cr=await client.from('conversations').select('id,is_group,title').in('id',ids);
+    if(!cr.error)(cr.data||[]).forEach(c=>conversationsMap[c.id]=c);
+  }catch(e){console.warn('conversations table not found, using fallback',e);}
+
+  // Legacy groups table fallback for names
+  let legacyGroupNames={};
+  try{
+    const gr=await client.from('groups').select('id,name').in('id',ids);
+    if(!gr.error)(gr.data||[]).forEach(g=>legacyGroupNames[g.id]=g.name);
+  }catch(e){}
+
+  const otherIds=[...new Set(members.filter(m=>m.user_id!==user.id).map(m=>m.user_id))];
+  let profilesMap={};
+  if(otherIds.length){
+    const profs=await client.from('profiles').select('id,display_name,username,avatar_url').in('id',otherIds);
+    if(!profs.error)(profs.data||[]).forEach(p=>{profilesMap[p.id]=p;profilesCache[p.id]=p;});
+  }
+
+  const lastMsgs=await client.from('messages').select('conversation_id,body,created_at').in('conversation_id',ids).order('created_at',{ascending:false});
+  const lastByConvo={};
+  (lastMsgs.data||[]).forEach(m=>{if(!lastByConvo[m.conversation_id])lastByConvo[m.conversation_id]=m;});
+
+  contacts=ids.map(convoId=>{
+    const allMembers=members.filter(m=>m.conversation_id===convoId);
+    const conv=conversationsMap[convoId];
+    // Group if marked as group in DB, OR legacy group exists, OR more than 2 members
+    const isGroup=conv?.is_group===true||!!legacyGroupNames[convoId]||allMembers.length>2;
+    if(isGroup){
+      const title=(conv?.title||'').trim();
+      return {conversation:convoId,id:convoId,display_name:title||legacyGroupNames[convoId]||'Group Chat',username:'',avatar_url:'',last:lastByConvo[convoId]?.body||'',last_at:lastByConvo[convoId]?.created_at||'',isGroup:true,memberCount:allMembers.length,memberIds:allMembers.map(m=>m.user_id)};
+    }
+    const other=allMembers.find(m=>m.user_id!==user.id);
+    const p=other?profilesMap[other.user_id]:null;
+    return {conversation:convoId,id:p?.id||other?.user_id,display_name:p?.display_name||'VYBEX User',username:p?.username||'',avatar_url:p?.avatar_url||'',last:lastByConvo[convoId]?.body||'',last_at:lastByConvo[convoId]?.created_at||'',isGroup:false,memberCount:allMembers.length,memberIds:allMembers.map(m=>m.user_id)};
+  });
+  contacts.sort((a,b)=>(b.last_at||'').localeCompare(a.last_at||''));
+  renderContacts();
 }
 
 function renderContacts(){
- const q=($('search').value||'').toLowerCase();
- const list=contacts.filter(c=>(c.display_name+' '+c.username).toLowerCase().includes(q));
- if(!list.length){$('contacts').innerHTML='<p class="muted" style="padding:0 20px;font-size:13px">No chats yet. Tap + or 👥 to start one.</p>';return;}
- $('contacts').innerHTML=list.map(c=>`<div class="contact ${currentConversation?.conversation===c.conversation?'active':''}" data-id="${c.conversation}">
-  <div class="avatar">${c.isGroup?'👥':(c.avatar_url?`<img src="${escapeHtml(c.avatar_url)}" alt="">`:escapeHtml((c.display_name||'V').slice(0,1).toUpperCase()))}</div>
-  <div class="contact-info"><div class="contact-name">${escapeHtml(c.display_name)} ${c.isGroup?'<span class="group-badge">GROUP</span>':(c.username?`<span class="muted" style="font-weight:400">@${escapeHtml(c.username)}</span>`:'')}</div><div class="preview">${escapeHtml(c.last||'')}</div></div>
-  <span style="width:8px;height:8px;border-radius:50%;background:${!c.isGroup&&onlineUsers.has(c.id)?'#35d49a':'transparent'};flex-shrink:0"></span></div>`).join('');
- document.querySelectorAll('.contact').forEach(el=>{el.onclick=()=>{const chat=contacts.find(x=>x.conversation===el.dataset.id);if(chat)openChat(chat);};});
+  const q=($('search').value||'').toLowerCase();
+  const list=contacts.filter(c=>(c.display_name+' '+c.username).toLowerCase().includes(q));
+  if(!list.length){$('contacts').innerHTML='<p class="muted" style="padding:0 20px;font-size:13px">No chats yet. Tap + or 👥 to start one.</p>';return;}
+  $('contacts').innerHTML=list.map(c=>{
+    const avatar=c.isGroup?'👥':(c.avatar_url?'<img src="'+escapeHtml(c.avatar_url)+'" alt="">':escapeHtml((c.display_name||'V').slice(0,1).toUpperCase()));
+    const badge=c.isGroup?'<span class="group-badge">GROUP</span>':(c.username?'<span class="muted" style="font-weight:400">@'+escapeHtml(c.username)+'</span>':'');
+    const dot=!c.isGroup&&onlineUsers.has(c.id)?'#35d49a':'transparent';
+    return '<div class="contact '+(currentConversation&&currentConversation.conversation===c.conversation?'active':'')+'" data-id="'+c.conversation+'"><div class="avatar">'+avatar+'</div><div class="contact-info"><div class="contact-name">'+escapeHtml(c.display_name)+' '+badge+'</div><div class="preview">'+escapeHtml(c.last||'')+'</div></div><span style="width:8px;height:8px;border-radius:50%;background:'+dot+';flex-shrink:0"></span></div>';
+  }).join('');
+  document.querySelectorAll('.contact').forEach(el=>{
+    el.onclick=()=>{const chat=contacts.find(x=>x.conversation===el.dataset.id);if(chat)openChat(chat);};
+  });
 }
 
 function updateFriendStatus(){
- if(!currentConversation)return;
- $('friendStatus').textContent=currentConversation.isGroup?`${currentConversation.memberCount} members`:(onlineUsers.has(currentConversation.id)?'Online':'Offline');
+  if(!currentConversation)return;
+  $('friendStatus').textContent=currentConversation.isGroup?currentConversation.memberCount+' members':(onlineUsers.has(currentConversation.id)?'Online':'Offline');
 }
+
 async function enterApp(){
- if(!user)return;
- $('auth').classList.add('hidden');$('app').classList.remove('hidden');
- try{await loadMyProfile();await loadContacts();startPresence();startInboxUpdates();}
- catch(err){console.error(err);alert('VYBEX could not load your profile: '+err.message);}
+  if(!user)return;
+  $('auth').classList.add('hidden');$('app').classList.remove('hidden');
+  try{await loadMyProfile();await loadContacts();startPresence();startInboxUpdates();}
+  catch(err){console.error(err);alert('VYBEX could not load your profile: '+err.message);}
 }
 function startInboxUpdates(){
- if(inboxChannel)client.removeChannel(inboxChannel);
- inboxChannel=client.channel('vybex-inbox-'+user.id).on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},async()=>{await loadContacts();}).subscribe();
+  if(inboxChannel)client.removeChannel(inboxChannel);
+  inboxChannel=client.channel('vybex-inbox-'+user.id).on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},async()=>{await loadContacts();}).subscribe();
 }
 function startPresence(){
- if(presenceChannel)client.removeChannel(presenceChannel);
- presenceChannel=client.channel('vybex-presence').on('presence',{event:'sync'},()=>{
-  const state=presenceChannel.presenceState();onlineUsers=new Set(Object.values(state).flat().map(p=>p.user_id));renderContacts();updateFriendStatus();
- }).subscribe(async status=>{if(status==='SUBSCRIBED')await presenceChannel.track({user_id:user.id});});
+  if(presenceChannel)client.removeChannel(presenceChannel);
+  presenceChannel=client.channel('vybex-presence').on('presence',{event:'sync'},()=>{
+    const state=presenceChannel.presenceState();
+    onlineUsers=new Set(Object.values(state).flat().map(p=>p.user_id));
+    renderContacts();updateFriendStatus();
+  }).subscribe(async status=>{if(status==='SUBSCRIBED')await presenceChannel.track({user_id:user.id});});
 }
 
 async function openChat(chat){
- currentConversation=chat;$('app').classList.add('chat-open');$('friendName').textContent=chat.display_name;updateFriendStatus();
- if(chat.isGroup)$('friendAvatar').textContent='👥';else setAvatar($('friendAvatar'),chat.avatar_url,chat.display_name);
- $('deleteChatBtn').style.display='block';$('messageInput').disabled=false;$('messageForm').querySelector('button').disabled=false;
- renderContacts();await loadMessages();
- if(channel)await client.removeChannel(channel);
- channel=client.channel('vybex-chat-'+chat.conversation)
-  .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:'conversation_id=eq.'+chat.conversation},payload=>{if(payload.new.sender_id!==user.id)appendMessage(payload.new);loadContacts();})
-  .on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages',filter:'conversation_id=eq.'+chat.conversation},payload=>refreshMessage(payload.new))
-  .on('postgres_changes',{event:'DELETE',schema:'public',table:'messages'},payload=>{if(payload.old?.id)removeMessage(payload.old.id);})
-  .subscribe();
+  currentConversation=chat;
+  $('app').classList.add('chat-open');
+  $('friendName').textContent=chat.display_name;
+  updateFriendStatus();
+  if(chat.isGroup)$('friendAvatar').textContent='👥';
+  else setAvatar($('friendAvatar'),chat.avatar_url,chat.display_name);
+  $('deleteChatBtn').style.display='block';
+  $('messageInput').disabled=false;
+  $('messageForm').querySelector('button').disabled=false;
+  renderContacts();
+  await loadMessages();
+  if(channel)await client.removeChannel(channel);
+  channel=client.channel('vybex-chat-'+chat.conversation)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:'conversation_id=eq.'+chat.conversation},payload=>{if(payload.new.sender_id!==user.id)appendMessage(payload.new);loadContacts();})
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages',filter:'conversation_id=eq.'+chat.conversation},payload=>refreshMessage(payload.new))
+    .on('postgres_changes',{event:'DELETE',schema:'public',table:'messages'},payload=>{if(payload.old&&payload.old.id)removeMessage(payload.old.id);})
+    .subscribe();
 }
+
 async function loadMessages(){
- if(!currentConversation)return;
- $('messages').innerHTML='<p class="muted" style="text-align:center">Loading…</p>';
- const {data,error}=await client.from('messages').select('*').eq('conversation_id',currentConversation.conversation).order('created_at',{ascending:true}).limit(200);
- if(error){$('messages').innerHTML='<p class="muted" style="text-align:center">Could not load messages.</p>';console.error(error);return;}
- $('messages').innerHTML='';if(!data?.length)$('messages').innerHTML='<div class="empty"><p>Say hi to start the conversation.</p></div>';
- (data||[]).forEach(m=>appendMessage(m));$('messages').scrollTop=$('messages').scrollHeight;
+  if(!currentConversation)return;
+  $('messages').innerHTML='<p class="muted" style="text-align:center">Loading…</p>';
+  const {data,error}=await client.from('messages').select('*').eq('conversation_id',currentConversation.conversation).order('created_at',{ascending:true}).limit(200);
+  if(error){$('messages').innerHTML='<p class="muted" style="text-align:center">Could not load messages.</p>';console.error(error);return;}
+  $('messages').innerHTML='';
+  if(!data||!data.length)$('messages').innerHTML='<div class="empty"><p>Say hi to start the conversation.</p></div>';
+  (data||[]).forEach(m=>appendMessage(m));
+  $('messages').scrollTop=$('messages').scrollHeight;
 }
+
 function receiptText(m){if(!m)return'';if(m.read_at)return'Seen';if(m.delivered_at)return'Delivered';return'Sent';}
+
 function appendMessage(m){
- if(!m)return;
- const empty=document.querySelector('#messages .empty');if(empty)empty.remove();
- if(document.querySelector(`[data-message-id="${m.id}"]`))return;
- if(m.deleted_for&&m.deleted_for.includes(user.id))return;
- const isMe=m.sender_id===user.id,div=document.createElement('div');div.className='msg '+(isMe?'out':'in');div.dataset.messageId=m.id;
- const time=new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),isDeleted=m.is_deleted;
- const senderName=currentConversation?.isGroup&&!isMe?(profilesCache[m.sender_id]?.display_name||'Member'):'';
- div.innerHTML=`${senderName?`<div class="sender-name">${escapeHtml(senderName)}</div>`:''}<div class="bubble ${isDeleted?'deleted':''}">${isDeleted?'🚫 This message was deleted':escapeHtml(m.body)}</div><div class="stamp">${time}${isMe&&!isDeleted?' · '+receiptText(m):''}${!isDeleted&&m.updated_at&&m.updated_at!==m.created_at?'<span class="edited-label">(edited)</span>':''}</div>`;
- const bubble=div.querySelector('.bubble');bubble.addEventListener('click',e=>showMessageMenu(e,m));
- let pressT;bubble.addEventListener('touchstart',ev=>{pressT=setTimeout(()=>showMessageMenu({clientX:ev.touches[0].clientX,clientY:ev.touches[0].clientY,stopPropagation:()=>{}},m),500);},{passive:true});
- bubble.addEventListener('touchend',()=>clearTimeout(pressT));bubble.addEventListener('touchmove',()=>clearTimeout(pressT));
- $('messages').appendChild(div);$('messages').scrollTop=$('messages').scrollHeight;
+  if(!m)return;
+  const empty=document.querySelector('#messages .empty');if(empty)empty.remove();
+  if(document.querySelector('[data-message-id="'+m.id+'"]'))return;
+  if(m.deleted_for&&m.deleted_for.includes(user.id))return;
+  const isMe=m.sender_id===user.id;
+  const div=document.createElement('div');
+  div.className='msg '+(isMe?'out':'in');
+  div.dataset.messageId=m.id;
+  const time=new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  const isDeleted=m.is_deleted;
+  const senderName=currentConversation&&currentConversation.isGroup&&!isMe?(profilesCache[m.sender_id]?.display_name||'Member'):'';
+  const senderHtml=senderName?'<div class="sender-name">'+escapeHtml(senderName)+'</div>':'';
+  const editedHtml=(!isDeleted&&m.updated_at&&m.updated_at!==m.created_at)?'<span class="edited-label">(edited)</span>':'';
+  const receiptHtml=(isMe&&!isDeleted)?' · '+receiptText(m):'';
+  div.innerHTML=senderHtml+'<div class="bubble '+(isDeleted?'deleted':'')+'">'+(isDeleted?'🚫 This message was deleted':escapeHtml(m.body))+'</div><div class="stamp">'+time+receiptHtml+editedHtml+'</div>';
+  const bubble=div.querySelector('.bubble');
+  bubble.addEventListener('click',e=>showMessageMenu(e,m));
+  let pressT;
+  bubble.addEventListener('touchstart',ev=>{pressT=setTimeout(()=>showMessageMenu({clientX:ev.touches[0].clientX,clientY:ev.touches[0].clientY,stopPropagation:()=>{}},m),500);},{passive:true});
+  bubble.addEventListener('touchend',()=>clearTimeout(pressT));
+  bubble.addEventListener('touchmove',()=>clearTimeout(pressT));
+  $('messages').appendChild(div);
+  $('messages').scrollTop=$('messages').scrollHeight;
 }
+
 function refreshMessage(m){
- if(m.deleted_for&&m.deleted_for.includes(user.id)){removeMessage(m.id);return;}
- const row=document.querySelector(`[data-message-id="${m.id}"]`);if(!row){appendMessage(m);return;}
- const bubble=row.querySelector('.bubble');
- if(bubble){if(m.is_deleted){bubble.textContent='🚫 This message was deleted';bubble.classList.add('deleted');}else{bubble.textContent=m.body;bubble.classList.remove('deleted');}}
- const stamp=row.querySelector('.stamp');
- if(stamp){const time=new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});stamp.innerHTML=time+(m.sender_id===user.id&&!m.is_deleted?' · '+receiptText(m):'')+(!m.is_deleted&&m.updated_at&&m.updated_at!==m.created_at?'<span class="edited-label">(edited)</span>':'');}
+  if(m.deleted_for&&m.deleted_for.includes(user.id)){removeMessage(m.id);return;}
+  const row=document.querySelector('[data-message-id="'+m.id+'"]');
+  if(!row){appendMessage(m);return;}
+  const bubble=row.querySelector('.bubble');
+  if(bubble){
+    if(m.is_deleted){bubble.textContent='🚫 This message was deleted';bubble.classList.add('deleted');}
+    else{bubble.textContent=m.body;bubble.classList.remove('deleted');}
+  }
+  const stamp=row.querySelector('.stamp');
+  if(stamp){
+    const time=new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    const receipt=(m.sender_id===user.id&&!m.is_deleted)?' · '+receiptText(m):'';
+    const edited=(!m.is_deleted&&m.updated_at&&m.updated_at!==m.created_at)?'<span class="edited-label">(edited)</span>':'';
+    stamp.innerHTML=time+receipt+edited;
+  }
 }
-function removeMessage(id){const row=document.querySelector(`[data-message-id="${id}"]`);if(row)row.remove();}
+function removeMessage(id){const row=document.querySelector('[data-message-id="'+id+'"]');if(row)row.remove();}
+
 function showMessageMenu(e,m){
- e.stopPropagation();const menu=$('messageMenu');menu.classList.remove('hidden');
- menu.style.left=Math.max(5,Math.min(e.clientX,window.innerWidth-200))+'px';menu.style.top=Math.max(5,Math.min(e.clientY,window.innerHeight-210))+'px';
- const row=document.querySelector(`[data-message-id="${m.id}"]`),isMe=m.sender_id===user.id||(row&&row.classList.contains('out'));menu.innerHTML='';
- const copy=document.createElement('button');copy.textContent='📋 Copy';copy.onclick=async()=>{menu.classList.add('hidden');if(!m.is_deleted)try{await navigator.clipboard.writeText(m.body);}catch(_){}};menu.appendChild(copy);
- if(isMe&&!m.is_deleted){
-  const edit=document.createElement('button');edit.textContent='✏️ Edit';edit.onclick=async()=>{menu.classList.add('hidden');const next=await showModal('Edit message','Edit your message','Save');if(next===null)return;const body=next.trim();if(!body||body===m.body)return;const {data,error}=await client.rpc('edit_own_message',{p_message_id:m.id,p_body:body});if(error){alert('Could not edit: '+error.message);return;}const updated=Array.isArray(data)?data[0]:data;if(updated)refreshMessage(updated);else await loadMessages();};menu.appendChild(edit);
- }
- const delMe=document.createElement('button');delMe.textContent='🗑 Delete for me';delMe.onclick=async()=>{menu.classList.add('hidden');if(!confirm('Delete this message for you?'))return;const {error}=await client.rpc('delete_message',{p_message_id:m.id,p_for_everyone:false});if(error){alert('Could not delete: '+error.message);return;}removeMessage(m.id);};menu.appendChild(delMe);
- if(isMe&&!m.is_deleted){
-  const delAll=document.createElement('button');delAll.className='danger';delAll.textContent='🗑 Delete for everyone';delAll.onclick=async()=>{menu.classList.add('hidden');if(!confirm('Delete this message for everyone?'))return;const {error}=await client.rpc('delete_message',{p_message_id:m.id,p_for_everyone:true});if(error){alert('Could not delete: '+error.message);return;}refreshMessage({...m,is_deleted:true,body:'This message was deleted'});};menu.appendChild(delAll);
- }
- const close=ev=>{if(!menu.contains(ev.target)){menu.classList.add('hidden');document.removeEventListener('click',close);}};
- setTimeout(()=>document.addEventListener('click',close),0);
+  e.stopPropagation();
+  const menu=$('messageMenu');
+  menu.classList.remove('hidden');
+  menu.style.left=Math.max(5,Math.min(e.clientX,window.innerWidth-200))+'px';
+  menu.style.top=Math.max(5,Math.min(e.clientY,window.innerHeight-210))+'px';
+  const row=document.querySelector('[data-message-id="'+m.id+'"]');
+  const isMe=m.sender_id===user.id||(row&&row.classList.contains('out'));
+  menu.innerHTML='';
+  const copy=document.createElement('button');copy.textContent='📋 Copy';
+  copy.onclick=async()=>{menu.classList.add('hidden');if(!m.is_deleted)try{await navigator.clipboard.writeText(m.body);}catch(_){}};
+  menu.appendChild(copy);
+  if(isMe&&!m.is_deleted){
+    const edit=document.createElement('button');edit.textContent='✏️ Edit';
+    edit.onclick=async()=>{
+      menu.classList.add('hidden');
+      const next=await showModal('Edit message','Edit your message','Save');
+      if(next===null)return;
+      const body=next.trim();if(!body||body===m.body)return;
+      const {data,error}=await client.rpc('edit_own_message',{p_message_id:m.id,p_body:body});
+      if(error){alert('Could not edit: '+error.message);return;}
+      const updated=Array.isArray(data)?data[0]:data;
+      if(updated)refreshMessage(updated);else await loadMessages();
+    };
+    menu.appendChild(edit);
+  }
+  const delMe=document.createElement('button');delMe.textContent='🗑 Delete for me';
+  delMe.onclick=async()=>{
+    menu.classList.add('hidden');
+    if(!confirm('Delete this message for you?'))return;
+    const {error}=await client.rpc('delete_message',{p_message_id:m.id,p_for_everyone:false});
+    if(error){alert('Could not delete: '+error.message);return;}
+    removeMessage(m.id);
+  };
+  menu.appendChild(delMe);
+  if(isMe&&!m.is_deleted){
+    const delAll=document.createElement('button');delAll.className='danger';delAll.textContent='🗑 Delete for everyone';
+    delAll.onclick=async()=>{
+      menu.classList.add('hidden');
+      if(!confirm('Delete this message for everyone?'))return;
+      const {error}=await client.rpc('delete_message',{p_message_id:m.id,p_for_everyone:true});
+      if(error){alert('Could not delete: '+error.message);return;}
+      refreshMessage({...m,is_deleted:true,body:'This message was deleted'});
+    };
+    menu.appendChild(delAll);
+  }
+  const close=(ev)=>{if(!menu.contains(ev.target)){menu.classList.add('hidden');document.removeEventListener('click',close);}};
+  setTimeout(()=>document.addEventListener('click',close),0);
 }
 
 async function deleteChatForMe(){
- if(!currentConversation)return;
- const chat=currentConversation;
- if(!confirm(chat.isGroup?'Leave this group? You will stop receiving its messages.':'Delete this chat for you? The other person will keep their messages.'))return;
- const chatId=chat.conversation;
- await client.from('deleted_chats').delete().eq('user_id',user.id).eq('conversation_id',chatId);
- const {error}=await client.from('deleted_chats').insert({user_id:user.id,conversation_id:chatId,deleted_at:new Date().toISOString()});
- if(error){alert('Could not delete chat: '+error.message);return;}
- if(channel){await client.removeChannel(channel);channel=null;}
- currentConversation=null;$('messages').innerHTML='<div class="empty"><div class="logo" style="margin:0 auto 14px">V</div><strong>Welcome to VYBEX</strong><p>Choose a conversation or start a new chat.</p></div>';
- $('friendName').textContent='Choose a conversation';$('friendStatus').textContent='Your private messages';$('friendAvatar').textContent='V';$('deleteChatBtn').style.display='none';$('messageInput').disabled=true;$('messageForm').querySelector('button').disabled=true;$('app').classList.remove('chat-open');await loadContacts();
+  if(!currentConversation)return;
+  const chat=currentConversation;
+  if(!confirm(chat.isGroup?'Leave this group? You will stop receiving its messages.':'Delete this chat for you? The other person will keep their messages.'))return;
+  const chatId=chat.conversation;
+  await client.from('deleted_chats').delete().eq('user_id',user.id).eq('conversation_id',chatId);
+  const {error}=await client.from('deleted_chats').insert({user_id:user.id,conversation_id:chatId,deleted_at:new Date().toISOString()});
+  if(error){alert('Could not delete chat: '+error.message);return;}
+  if(channel){await client.removeChannel(channel);channel=null;}
+  currentConversation=null;
+  $('messages').innerHTML='<div class="empty"><div class="logo" style="margin:0 auto 14px">V</div><strong>Welcome to VYBEX</strong><p>Choose a conversation or start a new chat.</p></div>';
+  $('friendName').textContent='Choose a conversation';
+  $('friendStatus').textContent='Your private messages';
+  $('friendAvatar').textContent='V';
+  $('deleteChatBtn').style.display='none';
+  $('messageInput').disabled=true;
+  $('messageForm').querySelector('button').disabled=true;
+  $('app').classList.remove('chat-open');
+  await loadContacts();
 }
 $('deleteChatBtn').onclick=deleteChatForMe;
-$('messageForm').onsubmit=async e=>{
- e.preventDefault();const body=$('messageInput').value.trim();if(!body||!currentConversation)return;$('messageInput').value='';
- const {data,error}=await client.from('messages').insert({conversation_id:currentConversation.conversation,sender_id:user.id,body}).select().single();
- if(error){$('messageInput').value=body;alert('Message not sent: '+error.message);return;}
- appendMessage(data);await loadContacts();
+
+$('messageForm').onsubmit=async(e)=>{
+  e.preventDefault();
+  const body=$('messageInput').value.trim();
+  if(!body||!currentConversation)return;
+  $('messageInput').value='';
+  const {data,error}=await client.from('messages').insert({conversation_id:currentConversation.conversation,sender_id:user.id,body}).select().single();
+  if(error){$('messageInput').value=body;alert('Message not sent: '+error.message);return;}
+  appendMessage(data);await loadContacts();
 };
 $('search').oninput=renderContacts;
 $('back').onclick=()=>$('app').classList.remove('chat-open');
 
+// Helpers with fallback if RPC does not exist
+async function createDirectChatFallback(friendId){
+  const {data:mine}=await client.from('conversation_members').select('conversation_id').eq('user_id',user.id);
+  const myIds=(mine||[]).map(x=>x.conversation_id);
+  if(myIds.length){
+    const {data:others}=await client.from('conversation_members').select('conversation_id,user_id').in('conversation_id',myIds).eq('user_id',friendId);
+    for(const row of (others||[])){
+      const {data:mem}=await client.from('conversation_members').select('user_id').eq('conversation_id',row.conversation_id);
+      if(mem&&mem.length===2)return row.conversation_id;
+    }
+  }
+  const newId=crypto.randomUUID();
+  try{await client.from('conversations').insert({id:newId,is_group:false,title:null});}catch(e){}
+  const {error}=await client.from('conversation_members').insert([{conversation_id:newId,user_id:user.id},{conversation_id:newId,user_id:friendId}]);
+  if(error)throw error;
+  return newId;
+}
+async function createGroupFallback(name,memberIds){
+  const newId=crypto.randomUUID();
+  try{
+    await client.from('conversations').insert({id:newId,is_group:true,title:name});
+  }catch(e){
+    try{await client.from('groups').insert({id:newId,name,created_by:user.id});}catch(e2){}
+  }
+  const rows=[{conversation_id:newId,user_id:user.id},...memberIds.map(id=>({conversation_id:newId,user_id:id}))];
+  const {error}=await client.from('conversation_members').insert(rows);
+  if(error)throw error;
+  return newId;
+}
+async function findProfileByUsername(uname){
+  const {data,error}=await client.rpc('find_profile_by_username',{p_username:uname});
+  if(!error){
+    const p=Array.isArray(data)?data[0]:data;
+    if(p)return p;
+  }
+  // Fallback: direct query
+  const {data:rows,error:e2}=await client.from('profiles').select('id,display_name,username,avatar_url').eq('username',uname).maybeSingle();
+  if(e2)throw e2;
+  return rows;
+}
+
 $('newChat').onclick=async()=>{
- const username=await showModal('New Chat',"Enter friend's username (without @)",'Create Chat');if(!username)return;
- $('modalError').textContent='Creating…';
- try{
-  const {data:matches,error}=await client.rpc('find_profile_by_username',{p_username:username.replace(/^@/,'').toLowerCase()});if(error)throw error;
-  const profile=Array.isArray(matches)?matches[0]:matches;
-  if(!profile){$('modalError').textContent='Friend not found: @'+username;$('genericModal').classList.remove('hidden');return;}
-  if(profile.id===user.id){$('modalError').textContent='You cannot chat with yourself.';$('genericModal').classList.remove('hidden');return;}
-  const {data:chatId,error:chatError}=await client.rpc('create_direct_chat',{friend_id:profile.id});if(chatError)throw chatError;
-  $('genericModal').classList.add('hidden');await loadContacts();const chat=contacts.find(c=>c.conversation===chatId);if(chat)openChat(chat);else alert('Chat created, but it was not returned in your chat list. Check conversation membership permissions.');
- }catch(err){$('modalError').textContent=err.message;$('genericModal').classList.remove('hidden');}
+  const username=await showModal('New Chat',"Enter friend's username (without @)",'Create Chat');
+  if(!username)return;
+  $('modalError').textContent='Creating…';
+  try{
+    const profile=await findProfileByUsername(username.replace(/^@/,'').toLowerCase());
+    if(!profile){$('modalError').textContent='Friend not found: @'+username;$('genericModal').classList.remove('hidden');return;}
+    if(profile.id===user.id){$('modalError').textContent='You cannot chat with yourself.';$('genericModal').classList.remove('hidden');return;}
+    let chatId=null;
+    try{
+      const {data,[STRIPPED] client.rpc('create_direct_chat',{friend_id:profile.id});
+      if(chatError)throw chatError;
+      chatId=data;
+    }catch(e){chatId=await createDirectChatFallback(profile.id);}
+    $('genericModal').classList.add('hidden');
+    await loadContacts();
+    const chat=contacts.find(c=>c.conversation===chatId);
+    if(chat)openChat(chat);
+  }catch(err){$('modalError').textContent=err.message;$('genericModal').classList.remove('hidden');}
 };
 
-$('newGroup').onclick=()=>{$('groupName').value='';$('groupMembers').value='';showError('groupError','');$('groupModal').classList.remove('hidden');setTimeout(()=>$('groupName').focus(),50);};
+$('newGroup').onclick=()=>{
+  $('groupName').value='';$('groupMembers').value='';showError('groupError','');
+  $('groupModal').classList.remove('hidden');
+  setTimeout(()=>$('groupName').focus(),50);
+};
 $('groupCancel').onclick=()=>$('groupModal').classList.add('hidden');
 $('groupModal').addEventListener('click',e=>{if(e.target===$('groupModal'))$('groupModal').classList.add('hidden');});
 $('groupGo').onclick=async()=>{
- const name=$('groupName').value.trim(),raw=$('groupMembers').value.trim();
- if(!name){showError('groupError','Enter a group name.');return;}
- if(name.length>60){showError('groupError','Group name must be 60 characters or fewer.');return;}
- const usernames=[...new Set(raw.split(',').map(s=>s.trim().replace(/^@/,'').toLowerCase()).filter(Boolean))];
- if(usernames.length<2){showError('groupError','Add at least 2 people, comma separated.');return;}
- $('groupGo').disabled=true;showError('groupError','Creating group…');
- try{
-  const memberIds=[];
-  for(const uname of usernames){
-   const {data,error}=await client.rpc('find_profile_by_username',{p_username:uname});if(error)throw error;
-   const p=Array.isArray(data)?data[0]:data;if(!p)throw new Error('Not found: @'+uname);
-   if(p.id===user.id)throw new Error('You are already in the group. Do not add your own username.');
-   if(!memberIds.includes(p.id))memberIds.push(p.id);
-  }
-  const {data:groupId,error:createError}=await client.rpc('create_group',{p_name:name,p_member_ids:memberIds});
-  if(createError)throw createError;if(!groupId)throw new Error('The group was not created. Please try again.');
-  $('groupModal').classList.add('hidden');await loadContacts();
-  const chat=contacts.find(c=>c.conversation===groupId);
-  if(chat)openChat(chat);else alert('Group created, but it was not returned in your chat list. Check that create_group adds you to conversation_members and sets conversations.title.');
- }catch(err){showError('groupError',err.message);}
- finally{$('groupGo').disabled=false;}
+  const name=$('groupName').value.trim(),raw=$('groupMembers').value.trim();
+  if(!name){showError('groupError','Enter a group name.');return;}
+  if(name.length>60){showError('groupError','Group name must be 60 characters or fewer.');return;}
+  const usernames=[...new Set(raw.split(',').map(s=>s.trim().replace(/^@/,'').toLowerCase()).filter(Boolean))];
+  if(usernames.length<2){showError('groupError','Add at least 2 people, comma separated.');return;}
+  $('groupGo').disabled=true;showError('groupError','Creating group…');
+  try{
+    const memberIds=[];
+    for(const uname of usernames){
+      const p=await findProfileByUsername(uname);
+      if(!p)throw new Error('Not found: @'+uname);
+      if(p.id===user.id)throw new Error('You are already in the group. Do not add your own username.');
+      if(!memberIds.includes(p.id))memberIds.push(p.id);
+    }
+    let groupId=null;
+    try{
+      const {data,[STRIPPED] client.rpc('create_group',{p_name:name,p_member_ids:memberIds});
+      if(createError)throw createError;
+      groupId=data;
+    }catch(e){groupId=await createGroupFallback(name,memberIds);}
+    if(!groupId)throw new Error('The group was not created. Please try again.');
+    $('groupModal').classList.add('hidden');
+    await loadContacts();
+    const chat=contacts.find(c=>c.conversation===groupId);
+    if(chat)openChat(chat);
+  }catch(err){showError('groupError',err.message);}
+  finally{$('groupGo').disabled=false;}
 };
 
 function openProfileEditor(){
- $('profileDisplayName').value=myProfile.display_name||user?.user_metadata?.display_name||'';
- $('profileUsername').value=myProfile.username||'';showError('profileError','');setAvatar($('profilePreview'),myProfile.avatar_url,myProfile.display_name||'V');$('profileModal').classList.remove('hidden');
+  $('profileDisplayName').value=myProfile.display_name||user?.user_metadata?.display_name||'';
+  $('profileUsername').value=myProfile.username||'';
+  showError('profileError','');
+  setAvatar($('profilePreview'),myProfile.avatar_url,myProfile.display_name||'V');
+  $('profileModal').classList.remove('hidden');
 }
 $('editProfile').onclick=openProfileEditor;
 $('cancelProfile').onclick=()=>$('profileModal').classList.add('hidden');
 $('profileModal').addEventListener('click',e=>{if(e.target===$('profileModal'))$('profileModal').classList.add('hidden');});
-$('avatarFile').onchange=()=>{const file=$('avatarFile').files[0];if(file)setAvatar($('profilePreview'),URL.createObjectURL(file),$('profileDisplayName').value||'V');};
+$('avatarFile').onchange=()=>{
+  const file=$('avatarFile').files[0];
+  if(file)setAvatar($('profilePreview'),URL.createObjectURL(file),$('profileDisplayName').value||'V');
+};
 $('saveProfile').onclick=async()=>{
- const display_name=$('profileDisplayName').value.trim(),username=$('profileUsername').value.trim().toLowerCase();
- if(!display_name){showError('profileError','Enter a display name.');return;}
- if(!/^[a-z0-9_]{3,20}$/.test(username)){showError('profileError','Username must be 3–20 characters.');return;}
- $('saveProfile').disabled=true;showError('profileError','Saving…');
- try{
-  let avatar_url=myProfile.avatar_url;const file=$('avatarFile').files[0];
-  if(file){
-   if(file.size>5*1024*1024)throw Error('Choose an image smaller than 5 MB.');
-   const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
-   const path=user.id+'/'+Date.now()+'.'+ext;
-   const {error:upErr}=await client.storage.from('avatars').upload(path,file,{upsert:true,contentType:file.type});if(upErr)throw upErr;
-   const {data:pub}=client.storage.from('avatars').getPublicUrl(path);avatar_url=pub.publicUrl;
-  }
-  const {data,error}=await client.from('profiles').update({display_name,username,avatar_url}).eq('id',user.id).select('id,display_name,username,avatar_url').single();
-  if(error)throw error;myProfile=data;profilesCache[user.id]=data;
-  await client.auth.updateUser({data:{display_name}});$('profileModal').classList.add('hidden');await loadMyProfile();await loadContacts();
- }catch(err){showError('profileError',err.message);}
- finally{$('saveProfile').disabled=false;}
+  const display_name=$('profileDisplayName').value.trim(),username=$('profileUsername').value.trim().toLowerCase();
+  if(!display_name){showError('profileError','Enter a display name.');return;}
+  if(!/^[a-z0-9_]{3,20}$/.test(username)){showError('profileError','Username must be 3–20 characters using letters, numbers or underscores.');return;}
+  $('saveProfile').disabled=true;showError('profileError','Saving…');
+  try{
+    let avatar_url=myProfile.avatar_url;
+    const file=$('avatarFile').files[0];
+    if(file){
+      if(file.size>5*1024*1024)throw new Error('Choose an image smaller than 5 MB.');
+      const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+      const path=user.id+'/'+Date.now()+'.'+ext;
+      const {error:upErr}=await client.storage.from('avatars').upload(path,file,{upsert:true,contentType:file.type});
+      if(upErr)throw upErr;
+      const {data:pub}=client.storage.from('avatars').getPublicUrl(path);
+      avatar_url=pub.publicUrl;
+    }
+    const {data,error}=await client.from('profiles').update({display_name,username,avatar_url}).eq('id',user.id).select('id,display_name,username,avatar_url').single();
+    if(error)throw error;
+    myProfile=data;profilesCache[user.id]=data;
+    await client.auth.updateUser({data:{display_name}});
+    $('profileModal').classList.add('hidden');
+    await loadMyProfile();await loadContacts();
+  }catch(err){showError('profileError',err.message);}
+  finally{$('saveProfile').disabled=false;}
 };
 
 $('logout').onclick=async()=>{
- if(channel)await client.removeChannel(channel);if(presenceChannel)await client.removeChannel(presenceChannel);if(inboxChannel)await client.removeChannel(inboxChannel);
- await client.auth.signOut();channel=null;presenceChannel=null;inboxChannel=null;onlineUsers.clear();user=null;currentConversation=null;contacts=[];
- $('app').classList.add('hidden');$('auth').classList.remove('hidden');
+  if(channel)await client.removeChannel(channel);
+  if(presenceChannel)await client.removeChannel(presenceChannel);
+  if(inboxChannel)await client.removeChannel(inboxChannel);
+  await client.auth.signOut();
+  channel=null;presenceChannel=null;inboxChannel=null;
+  onlineUsers.clear();user=null;currentConversation=null;contacts=[];
+  $('app').classList.add('hidden');$('auth').classList.remove('hidden');
 };
 client.auth.getSession().then(({data})=>{if(data.session){user=data.session.user;enterApp();}});
 client.auth.onAuthStateChange((_event,session)=>{if(session&&!user){user=session.user;enterApp();}else if(!session&&user){user=null;}});
